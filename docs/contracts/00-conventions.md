@@ -79,6 +79,7 @@ res://
 | `itm_` | 物品（药、道具等，材料以外） | `itm_...` |
 | `node_` | 采集点 | `node_...` |
 | `flg_` | 状态旗标 | `flg_attic_open` |
+| `art_` | 美术素材（提示词文件与产出图共用此 ID） | `art_scene_workshop` |
 
 > **冲突示例**：变易（元素）与 变异（作用）拼音相同——`el_bianyi` / `eff_bianyi`，前缀隔离，合法。
 
