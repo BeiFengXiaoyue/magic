@@ -1,0 +1,13 @@
+# 仓库内统一 LF（Windows 检出不再触发 CRLF 噪音）
+* text=auto eol=lf
+
+# 二进制
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ogg binary
+*.wav binary
+*.mp3 binary
+*.ttf binary
+*.otf binary
