@@ -1,8 +1,10 @@
 ; Engine configuration file.
-; 《炼金术士手记》代码本体 — Alchemist Codex
-; Godot 4.7.2 · GDScript（静态类型）· JSON 数据驱动
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
 ;
-; 契约依据：docs/contracts/00-conventions.md
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
 
 config_version=5
 
@@ -10,7 +12,17 @@ config_version=5
 
 config/name="Alchemist Codex"
 config/description="《炼金术士手记》代码本体 — Godot 4.7.2 + GDScript + JSON"
+run/main_scene="res://src/engine/main.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
+
+[autoload]
+
+Events="*res://src/app/events.gd"
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
 
 [rendering]
 

@@ -136,6 +136,7 @@
 
 ## 3.5 `content/items.json`（M2）
 
+> 文件结构同 00 §7.1：`{ "schema_version": 1, "entries": [...] }`。
 > 物品 = 成品的大类，不是实例。**实例**（每一瓶药）见 02 契约 `ProductInstance`。
 
 | 字段 | 类型 | 必填 | 说明 |
@@ -151,6 +152,8 @@
 ```
 
 ## 3.6 `content/nodes.json`（M2）
+
+> 文件结构同 00 §7.1：`{ "schema_version": 1, "entries": [...] }`。
 
 | 字段 | 类型 | 必填 | 说明 |
 |---|---|---|---|

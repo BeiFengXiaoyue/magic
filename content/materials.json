@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "entries": [
+    {
+      "id": "mat_qinglucao",
+      "name": "清露草",
+      "element_total": 3.0,
+      "spectrum": { "el_liuzhuan": 0.70, "el_ningding": 0.30 },
+      "fluctuation": 0.12,
+      "price": 3,
+      "habitat": "forest_wetland"
+    },
+    {
+      "id": "mat_taiyi",
+      "name": "苔衣",
+      "element_total": 3.0,
+      "spectrum": { "el_ningding": 0.65, "el_liuzhuan": 0.35 },
+      "fluctuation": 0.10,
+      "price": 2,
+      "habitat": "old_tree_root"
+    },
+    {
+      "id": "mat_rongyanxie",
+      "name": "熔岩屑",
+      "element_total": 4.0,
+      "spectrum": { "el_chiran": 0.75, "el_ningding": 0.25 },
+      "fluctuation": 0.15,
+      "price": 6,
+      "habitat": "volcanic_mountain"
+    },
+    {
+      "id": "mat_fengshisha",
+      "name": "风蚀砂",
+      "element_total": 3.0,
+      "spectrum": { "el_misan": 0.70, "el_zhixu": 0.30 },
+      "fluctuation": 0.18,
+      "price": 4,
+      "habitat": "mountain_ridge"
+    },
+    {
+      "id": "mat_shiyingsha",
+      "name": "石英砂",
+      "element_total": 3.0,
+      "spectrum": { "el_zhixu": 1.0 },
+      "fluctuation": 0.08,
+      "price": 4,
+      "habitat": "riverbed"
+    },
+    {
+      "id": "mat_jibianjun",
+      "name": "畸变菌",
+      "element_total": 4.0,
+      "spectrum": { "el_bianyi": 0.75, "el_liuzhuan": 0.25 },
+      "fluctuation": 0.20,
+      "price": 8,
+      "habitat": "swamp_depth"
+    },
+    {
+      "id": "mat_shouzhi",
+      "name": "兽脂",
+      "element_total": 3.0,
+      "spectrum": { "el_chiran": 0.65, "el_bianyi": 0.35 },
+      "fluctuation": 0.14,
+      "price": 5,
+      "habitat": "hunting"
+    },
+    {
+      "id": "mat_yingmu",
+      "name": "硬木",
+      "element_total": 3.0,
+      "spectrum": { "el_ningding": 1.0 },
+      "fluctuation": 0.06,
+      "price": 3,
+      "habitat": "forest"
+    },
+    {
+      "id": "mat_luwei",
+      "name": "芦苇",
+      "element_total": 3.0,
+      "spectrum": { "el_misan": 0.65, "el_liuzhuan": 0.35 },
+      "fluctuation": 0.15,
+      "price": 3,
+      "habitat": "waterside"
+    },
+    {
+      "id": "mat_yanjing",
+      "name": "盐晶",
+      "element_total": 3.0,
+      "spectrum": { "el_zhixu": 0.65, "el_ningding": 0.35 },
+      "fluctuation": 0.10,
+      "price": 5,
+      "habitat": "dry_riverbed"
+    },
+    {
+      "id": "mat_tongkuangshi",
+      "name": "铜矿石",
+      "element_total": 4.0,
+      "spectrum": { "el_ningding": 0.75, "el_zhixu": 0.25 },
+      "fluctuation": 0.10,
+      "price": 10,
+      "habitat": "ore_vein"
+    },
+    {
+      "id": "mat_tiekuangshi",
+      "name": "铁矿石",
+      "element_total": 5.0,
+      "spectrum": { "el_ningding": 0.80, "el_zhixu": 0.20 },
+      "fluctuation": 0.08,
+      "price": 15,
+      "habitat": "ore_vein"
+    }
+  ]
+}

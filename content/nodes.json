@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "entries": [
+    {
+      "id": "node_qinglucao_01",
+      "material_id": "mat_qinglucao",
+      "tier": 1,
+      "scene": "scene_forest",
+      "position": { "x": 320, "y": 480 },
+      "action": "gather",
+      "amount": 3
+    },
+    {
+      "id": "node_qinglucao_02",
+      "material_id": "mat_qinglucao",
+      "tier": 1,
+      "scene": "scene_forest",
+      "position": { "x": 560, "y": 520 },
+      "action": "gather",
+      "amount": 3
+    },
+    {
+      "id": "node_taiyi_01",
+      "material_id": "mat_taiyi",
+      "tier": 1,
+      "scene": "scene_forest",
+      "position": { "x": 760, "y": 320 },
+      "action": "gather",
+      "amount": 1
+    },
+    {
+      "id": "node_taiyi_02",
+      "material_id": "mat_taiyi",
+      "tier": 1,
+      "scene": "scene_forest",
+      "position": { "x": 900, "y": 540 },
+      "action": "gather",
+      "amount": 1
+    },
+    {
+      "id": "node_shiyingsha_01",
+      "material_id": "mat_shiyingsha",
+      "tier": 1,
+      "scene": "scene_forest",
+      "position": { "x": 420, "y": 700 },
+      "action": "gather",
+      "amount": 1
+    },
+    {
+      "id": "node_fengshisha_01",
+      "material_id": "mat_fengshisha",
+      "tier": 1,
+      "scene": "scene_forest",
+      "position": { "x": 980, "y": 720 },
+      "action": "gather",
+      "amount": 1
+    }
+  ]
+}

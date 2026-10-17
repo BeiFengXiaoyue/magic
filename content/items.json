@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "entries": [
+    {
+      "id": "itm_potion",
+      "name": "药剂",
+      "category": "potion",
+      "stackable": false
+    },
+    {
+      "id": "itm_residue",
+      "name": "无用残渣",
+      "category": "residue",
+      "stackable": true
+    }
+  ]
+}

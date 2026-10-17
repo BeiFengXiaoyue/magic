@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "entries": [
+    {
+      "id": "rcp_wenrun_tangji",
+      "name": "温润汤剂",
+      "inputs": { "mat_qinglucao": 3, "mat_taiyi": 1 },
+      "temperature_tier": "t_low_flame",
+      "duration_minutes": 60,
+      "base_price": 12,
+      "target": "el_shengming",
+      "source_letter": "ltr_L02"
+    },
+    {
+      "id": "rcp_tuire_ding",
+      "name": "退热酊",
+      "inputs": { "mat_qinglucao": 2, "mat_shiyingsha": 1 },
+      "temperature_tier": "t_mid_flame",
+      "duration_minutes": 60,
+      "base_price": 10,
+      "target": null,
+      "source_letter": "ltr_L04"
+    }
+  ]
+}
