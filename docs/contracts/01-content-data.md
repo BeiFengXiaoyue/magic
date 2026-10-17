@@ -110,6 +110,7 @@
 | `inputs` | `{mat_id: 份数}` | ✅ | 投料 |
 | `temperature_tier` | string | ✅ | 六档之一 |
 | `duration_minutes` | int | ✅ | 游戏分钟（T1 = 60） |
+| `base_price` | int | ✅ | 基准价 `P₀`（M2 定价用） |
 | `target` | string \| null | — | 预期主产物；**仅供手记显示与测试断言，求解器不读它** |
 | `source_letter` | string \| null | — | 来自哪封信（可空 = 自研） |
 
@@ -119,6 +120,7 @@
 { "id": "rcp_wenrun_tangji", "name": "温润汤剂",
   "inputs": { "mat_qinglucao": 3, "mat_taiyi": 1 },
   "temperature_tier": "t_low_flame", "duration_minutes": 60,
+  "base_price": 12,
   "target": "el_shengming", "source_letter": "ltr_L02" }
 ```
 
@@ -126,7 +128,47 @@
 { "id": "rcp_tuire_ding", "name": "退热酊",
   "inputs": { "mat_qinglucao": 2, "mat_shiyingsha": 1 },
   "temperature_tier": "t_mid_flame", "duration_minutes": 60,
+  "base_price": 10,
   "target": null, "source_letter": "ltr_L04" }
+```
+
+---
+
+## 3.5 `content/items.json`（M2）
+
+> 物品 = 成品的大类，不是实例。**实例**（每一瓶药）见 02 契约 `ProductInstance`。
+
+| 字段 | 类型 | 必填 | 说明 |
+|---|---|---|---|
+| `id` | string | ✅ | `itm_` 前缀 |
+| `name` | string | ✅ | 显示名 |
+| `category` | `"potion"` \| `"residue"` | ✅ | 类别 |
+| `stackable` | bool | ✅ | 药剂不可堆叠（每瓶组成不同）；残渣可堆叠 |
+
+```json
+{ "id": "itm_potion", "name": "药剂", "category": "potion", "stackable": false }
+{ "id": "itm_residue", "name": "无用残渣", "category": "residue", "stackable": true }
+```
+
+## 3.6 `content/nodes.json`（M2）
+
+| 字段 | 类型 | 必填 | 说明 |
+|---|---|---|---|
+| `id` | string | ✅ | `node_` 前缀 |
+| `material_id` | string | ✅ | 产出材料 |
+| `tier` | int | ✅ | 采集阶（空手率 / 理智消耗 / 再生天数按它取） |
+| `scene` | string | ✅ | 场景 ID（`scene_forest` 等） |
+| `position` | `{x:int, y:int}` | ✅ | 场景内坐标（占位美术阶段按色块坐标） |
+| `action` | `"gather"` \| `"chop_or_mine"` | ✅ | 决定耗时（10 / 30 游戏分钟） |
+| `amount` | int | ✅ | 单次产出份数 |
+
+M2 首批 6 个点：`node_qinglucao_01/02`（清露草）、`node_taiyi_01/02`（苔衣）、`node_shiyingsha_01`（石英砂）、`node_fengshisha_01`（风蚀砂）。
+再生：`regrow_at_day = 采集日 + constants.gathering.regrow_days_by_tier[tier]`；M2 存内存（存档 M4 前补）。
+
+```json
+{ "id": "node_qinglucao_01", "material_id": "mat_qinglucao", "tier": 1,
+  "scene": "scene_forest", "position": { "x": 320, "y": 480 },
+  "action": "gather", "amount": 1 }
 ```
 
 ---
@@ -198,6 +240,7 @@
     "base_miss_rate_by_tier": { "1": 0.20, "2": 0.35, "3": 0.50 },
     "tool_modifier": { "chai_knife": 1.0, "iron_pick": 0.8, "steel_tool": 0.6 },
     "weather_term": 0.0,
+    "default_tool": "chai_knife",
     "sanity_cost_by_tier": { "1": 2, "2": 5 },
     "minutes": { "gather": 10, "chop_or_mine": 30 },
     "regrow_days_by_tier": { "1": 3, "2": 7, "3": 14 }
@@ -205,6 +248,7 @@
 
   "pricing": {
     "elasticity": 0.6,
+    "mixture_base_price": 8,
     "rolling_window_days": 7,
     "q_th_base": 10,
     "p_floor_mult": 1.1,
@@ -282,6 +326,8 @@
 | 6 | 词表与轴映射的机器可读出处 = `constants.vocabulary`（16 作用 / 6 代价 / 3 轴） | 校验与 M3 手记共用；词表不能只活在正文表格里 |
 | 7 | M1 产物只存内存 `Inventory.products`，不进存档 | items.json 属 M2；见 02 契约 §1.9 |
 | 8 | `constants.demo` 承载开局演示数据（世界种子、初始库存） | M1 无采集与商店；M2 起由采集替代，此组可删 |
+| 9 | 配方带 `base_price`（P₀）；乱投产物兜底 `pricing.mixture_base_price` | 乱投没有配方，P₀ 必须有兜底 |
+| 10 | `items.json` 只定义物品大类；每瓶药的实例见 02 `ProductInstance` | 药剂不可堆叠，实例携带自身组成 |
 
 ---
 
@@ -292,4 +338,4 @@
 | `letters.json` | 信件（字段见信件与事件 §2.1 的十字段） | M3 |
 | `demands.json` | 若需求泛化，从 `constants.demand` 独立 | M2 收尾 |
 | `monsters.json` + 涂层 | 野狼/毒蛇、五行涂层（数值表 §5.5/§5.11） | M4 |
-| `items.json` | 药品成品、道具、灰烬残页等 | M2 |
+| `items.json` 扩展 | 灰烬残页、道具等（大类契约已转正为 §3.5）| M3 |

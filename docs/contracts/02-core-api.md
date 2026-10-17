@@ -1,6 +1,6 @@
 # 02 · 内核与层间接口契约
 
-> **状态：草案 v0.2**（按评审 A1~A12 / B2~B5 修订）
+> **状态：草案 v0.3**（按 M2 评审 A1~A10 / B / D 修订；v0.2 已含 M1 评审 A1~A12 / B1~B8）
 > 依据：`04-技术/架构设计.md` §4/§5 · `04-技术/Demo 制作计划.md` §3/§5 · `02-玩法/反应与条件.md` §4
 >
 > 本契约给出**可直接照着写代码的签名**。核心命题：`core / domain / app 三层删掉 engine 后仍能独立运行`。
@@ -84,10 +84,11 @@ var minute_of_day: int     # 0 ~ 1200（自 6:00 起算；1200 = 次日 02:00）
 
 func advance(game_minutes: int) -> void
 func real_seconds_for(game_minutes: int) -> float  # = game_minutes × (45/60)
+func today() -> int                                # 用于再生/每日结算（M2）
 ```
 
 **跨天规则**：`minute_of_day` 达到 `(day_end_hour − day_start_hour) × 60`（= 1200）时进日并发出 `day_passed`；`day > season_days` 进季；`season > 3` 进年。
-**唯一入口**：时钟只由编排层的 `CraftUseCase.tick()` / 早晨结算调用 `advance()`——**GameClock 不自行前进**，也不负责跨天后的领域结算（灵性代谢、2:00 昏倒判定由用例 O5 调各领域完成）。
+**唯一入口**：时钟只由编排层用例（`CraftUseCase.tick()` / `GatherUseCase.gather()` / 早晨结算）调用 `advance()`——**GameClock 不自行前进**，也不负责跨天后的领域结算。
 
 ### 1.5 DeterministicRng —— K4
 
@@ -139,23 +140,52 @@ func visual(state: Dictionary, ctx: Dictionary) -> Dictionary        # 视觉表
 
 **作用域纪律**：只处理"设计上要求降级或隐藏的信息"（成分、温度读数、作用读数、灵性档位、市场日报）。NPC 位置、库存数量、怪物血量等客观可见物**不走感知**，引擎直接读。
 
-### 1.9 Inventory —— 库存（新增，评审 A1）
+### 1.9 Inventory —— 库存
 
 ```gdscript
 class_name Inventory      # src/core/inventory.gd
 
 var materials: Dictionary          # {mat_id: int}
-var products: Array                # M1：Array[CraftResult]（内存暂存，不进存档）；M2 物品化
+var products: Array                # M2 起：Array[ProductInstance]（不可堆叠）；M1 不入库（产物由用例持有）
 
 func add_material(mat_id: String, count: int) -> void
 func take_material(mat_id: String, count: int) -> bool   # 不足 → false 且状态不变
 func count_material(mat_id: String) -> int
-func add_product(result: CraftResult) -> void
-func snapshot() -> Dictionary       # {materials: {mat_id: int}, products_count: int}（HUD / state_changed 用）
+func add_product(product: ProductInstance) -> void
+func remove_product(index: int) -> ProductInstance | null
+func product_at(index: int) -> ProductInstance | null
+func snapshot() -> Dictionary       # {materials: {mat_id: int}, products: [{itm_id, recipe_id}]}（HUD / state_changed 用）
 ```
 
-> 库存属内核：过程（取料）与编排（产出入库、售卖）都要用它，而领域**互不 import**——共享类型只能由内核定义。
-> **M1 产物口径（评审 A5，方案 A）**：只存内存 `Array[CraftResult]`，**不进存档**；M2 引入 `items.json` 后再物品化为 `{itm_id: int}`。
+### 1.10 ProductInstance —— 成品实例（评审 A1，M2）
+
+```gdscript
+class_name ProductInstance     # src/core/product_instance.gd
+
+var itm_id: String             # 物品大类："itm_potion"（M2）
+var recipe_id: String          # 有配方则记录；乱投产物 = ""
+var result: CraftResult        # 这一瓶的组成 / 产率 / 读数
+var created_day: int           # 产出日（GameClock.today()）
+
+func display_name() -> String  # 读 items.json 的 name（如"药剂"）
+```
+
+> 每瓶药性质不同 ⇒ **不可堆叠**；覆盖率与价格一律由 `result` 重算，**不存派生值**。
+> `Inventory.products` 的元素类型就是它；M1 的裸 `CraftResult` 不直接入库存。
+
+### 1.11 Wallet —— 金币持有者（评审 A7，M2）
+
+```gdscript
+class_name Wallet            # src/core/wallet.gd
+
+var gold: int
+var seals: int               # 炼金印记（M2 不产出，字段预留）
+
+func add_gold(amount: int) -> void
+func add_seals(amount: int) -> void
+func spend_gold(amount: int) -> bool   # 不足 → false
+func snapshot() -> Dictionary          # {gold: int, seals: int}
+```
 
 ---
 
@@ -213,28 +243,62 @@ temperature_c = clamp(nominal_c(tier) + U(−temp_jitter_c, +temp_jitter_c), 0, 
 ```gdscript
 class_name GatherProcess
 func attempt(node: Dictionary, tool_id: String, rng: DeterministicRng) -> Dictionary
-    # 空手率 = 基础率(tier) × 工具修正 × (1 + 天气项)；randf() < 空手率 → 空手
-    # 成功 / 空手：理智消耗相同（不减免）；产出 → 库存
+    # 空手率 = 基础率(tier) × 工具修正 × (1 + 天气项)；rng.randf() < 空手率 → 空手
+    # 成功 / 空手：理智消耗相同（不减免）；成功产出 amount 份
 ```
 
 > 其余六种（种植 / 熔炼 / 加工 / 装配 / 量产 / 仪式）**留位**：它们与炼制、采集同属本抽象，接口不许写死"炼制"。
 
-### 2.2 D2 经济（`domain/economy/`）
+### 2.2 D2 经济（`domain/economy/`）—— M2 简化口径（评审 A2/A3/A10）
 
 ```gdscript
 class_name Economy
 
 static func coverage(reading: Dictionary, demand: Dictionary) -> float
-    # 覆盖率 = Σ min(成品作用_i, 需求作用_i) ÷ Σ 需求作用_i，只统计需求列出的项（数值表 §5.8）
-static func list_price(result: CraftResult, demand: Dictionary, ctx: Dictionary) -> int
-    # P = clamp(P₀ × 季节系数 × 覆盖率 × (1 − 𝕜_弹性 × max(0, Q/Q_th − 1)), P_floor, P₀×1.3)
+    # = Σ min(成品作用_i, 需求作用_i) ÷ Σ 需求作用_i；只统计需求列出的项（数值表 §5.8）
+    # 调用方：coverage(product.result.reading, ContentDatabase.constant("demand.spring_early"))
+
+static func cost_of(product: ProductInstance) -> int
+    # = Σ materials.price × 配方 inputs 份数（成本由参考价现算，不存）
+    # 无 recipe_id（乱投产物）→ 0 —— 已知简化，M2 可接受
+
+static func list_price(product: ProductInstance, demand: Dictionary, ctx: Dictionary) -> int
 ```
 
-> `P₀`（制剂基准价）尚无出处——M2 前必须定（见 03 契约 §3.3 待补清单）。
+**定价口径（M2 硬契约）**
+
+```
+ctx = { season: int, reputation: String, rolling_q: int, q_th: int }
+P₀  = recipe.base_price（有配方）否则 constants.pricing.mixture_base_price
+cost = cost_of(product)；P_floor = cost × pricing.p_floor_mult
+cm   = coverage(product.result.reading, demand)
+cm < matching.normal_threshold → 返回 0（"卖不掉"）
+P    = clamp(P₀ × season_mult × cm × (1 − 𝕜_弹性 × max(0, rolling_q / q_th − 1)), P_floor, P₀ × p_cap_mult)
+```
+
+- `Q`（`rolling_q`）M2 取**当日已售数**（内存）；7 天滚动窗口 M4 前补。
+- **M2 只做单件出售**：不做货架配额、积压库存、批量出货。
+- 返回值 **0 即"卖不掉"**，调用方（SellUseCase）据此拒绝并给出理由，不得自行解释负数/异常值。
 
 ### 2.3 D3 叙事 / D4 角色
 
-M2 / M3 前补契约。骨架约束：D3 管信件到达、交互、手记写入、指引落地；D4 管 HP / 理智与结算。两者都只经内核类型通信。
+**D3 叙事**：M3 前补契约（信件到达、交互、手记写入、指引落地）。
+
+**D4 角色（M2 最小集，评审 A4）**
+
+```gdscript
+class_name CharacterState     # src/domain/character/character_state.gd
+
+var hp: int
+var sanity: int
+
+func adjust_sanity(delta: int) -> void
+func adjust_hp(delta: int) -> void
+func snapshot() -> Dictionary          # {hp: int, sanity: int}
+```
+
+- M2 只接**采集扣理智**（T1 −2 / T2 −5，来自 `constants.gathering.sanity_cost_by_tier`）；成功与空手同耗。
+- 归零后果（昏倒、丢材料、猎人救援）**M4 前补**，M2 不做。
 
 ---
 
@@ -254,14 +318,39 @@ func take_out() -> CraftResult                              # progress < 1 → n
 
 **时间驱动（评审 A12）**：引擎每帧把现实时间按 `constants.time.real_seconds_per_game_hour` 换算为游戏分钟，调用 `CraftUseCase.tick(minutes)`。**`tick` 是推进时钟的唯一入口**。
 
-**副作用清单（契约）**：扣材料 ✅ ｜ 扣时间（经 GameClock）✅ ｜ 产出入 `Inventory.products`（M1 内存）✅ ｜ **扣理智 ✗（M1 不做，M2 起经 D4 接入）**。
+**副作用清单（契约）**：扣材料 ✅ ｜ 扣时间（经 GameClock）✅ ｜ 产物：**M1 不入库存**（由用例持有，供面板显示与测试）；**M2 起包装为 `ProductInstance` 入 `Inventory.products`** ｜ **扣理智 ✗（M1 不做，M2 起经 D4 接入）**。
 
-### O2 ~ O5（M2 / M3 / M4 逐步补）
+### O2 · 采一次集（M2，评审 A6）
+
+```gdscript
+class_name GatherUseCase
+
+func gather(node_id: String) -> Dictionary
+# 返回 {success: bool, material_id: String, count: int, sanity_cost: int, minutes: int}
+# 流程：D1 GatherProcess.attempt（gather 流）→ 成功则 Inventory.add_material
+#       → D4 adjust_sanity(−sanity_cost)（成功/空手同耗）→ GameClock.advance(minutes)
+#       → 成功后节点进入再生：regrow_at_day = GameClock.today() + regrow_days_by_tier[tier]
+```
+
+- 空手：`success = false`，`count = 0`，理智照扣，时间照走。
+- M2 采集点再生状态放内存（存档 M4 前补）。
+
+### O3 · 卖一瓶药（M2，评审 A7）
+
+```gdscript
+class_name SellUseCase
+
+func sell(product_index: int) -> Dictionary
+# 返回 {sold: bool, price: int, coverage: float, reason: String}
+# 流程：Economy.list_price → 0 则 sold=false, reason="no_demand"
+#       → 否则 Wallet.add_gold(price)、Inventory.remove_product(product_index)、rolling_q += 1
+# reason 取值："ok" | "no_demand" | "invalid_index"
+```
+
+### O4 ~ O5（M3 / M4 逐步补）
 
 | 用例 | 串起 | 里程碑 |
 |---|---|---|
-| O2 采一次集 | D1 采集 → D2 入库存 → D4 扣理智 | M2 |
-| O3 卖一瓶药 | D1 取出 → D2 定价上架 | M2 |
 | O4 读一封信 | D3 到达 → D3 解读 → K5 涨灵性 | M3 |
 | O5 过一天 | K3 推进 → D4 结算 → 检查周期事件 | M4 |
 
@@ -272,7 +361,18 @@ func take_out() -> CraftResult                              # progress < 1 → n
 **职责**：场景、面板栈、角色表现、输入、音频、战斗的空间与时间判定（谁碰到谁、挥击判定、走位、动画）。
 **禁止**：算数值（伤害 / 理智 / 产率 / 价格）、直接改内核状态、直接读内核数值（`Perception` 除外）。
 
-### 4.1 事件总线（app 层单例）
+### 4.1 场景与交互（E1 / E4，评审 A9，M2）
+
+| 项 | 契约 |
+|---|---|
+| 场景 ID | `scene_workshop`（工坊）· `scene_shop`（小店）· `scene_forest`（晨暮森林）——M2 三个 |
+| 交互物 `target_id` | `dev_clay_crucible`（坩埚）· `shop_counter`（柜台）· `node_*`（采集点）· `bed` · `door_shop` / `door_forest` / `door_workshop`（门） |
+| 责权 | 引擎：移动（WASD）、距离判定、发现最近交互物并发 `interact`；**编排决定打开哪个面板 / 切哪个场景** |
+| 交互半径 | 引擎侧具名常量 `INTERACT_RADIUS_PX`（表现参数，不属数值表；M2 用占位值） |
+| 场景切换 | 玩家走进 `door_*` → 引擎发 `scene_change {scene_id}` → 编排校验后发 `panel/场景切换指令` → 引擎执行 |
+| M2 渲染 | **YSort + 占位色块**；不做高度层 / 深度遮挡 / 完整伪 3D（美术规格后置） |
+
+### 4.2 事件总线（app 层单例）
 
 `src/app/events.gd`（autoload 名 **`Events`**）——**它是唯一允许 `extends Node` 的 app 文件**：只放信号声明，不得含业务逻辑（00 契约 §2.2 的显式例外）。
 
@@ -284,7 +384,7 @@ signal cue_requested(cue: String, params: Dictionary)          # ③ 编排 → 
 signal state_changed(scope: String, payload: Dictionary)       # ③ 状态广播（HUD 刷新用）
 ```
 
-### 4.2 payload 键名契约（M1 首批）
+### 4.3 payload 键名契约（M1 + M2 首批）
 
 | 信号 | 取值 | payload 键 |
 |---|---|---|
@@ -293,13 +393,18 @@ signal state_changed(scope: String, payload: Dictionary)       # ③ 状态广�
 | | `"crucible_set_tier"` | `{tier_id: String}` |
 | | `"crucible_start"` | `{}` |
 | | `"crucible_take_out"` | `{}` |
-| `panel_requested` | `"crucible"` / `"journal"` | `{page: "recipes"\|"records"}`（journal 用） |
+| | `"gather_node"` | `{node_id: String}` |
+| | `"sell_product"` | `{product_index: int}` |
+| | `"interact"` | `{target_id: String}` |
+| | `"scene_change"` | `{scene_id: String}` |
+| `panel_requested` | `"crucible"` / `"journal"` / `"shop"` | `{page: "recipes"\|"records"}`（journal 用） |
 | `cue_requested` | `"bubbles"` | `{bubble_level: 0~5, steam_level: 0~5}` |
-| `state_changed` | `"inventory"` | `{materials: {mat_id: int}, products_count: int}` |
+| `state_changed` | `"inventory"` | `{materials: {mat_id: int}, products: [{itm_id: String, recipe_id: String}]}` |
 | | `"crucible"` | `{active: bool, progress: float, tier_id: String, inputs: {mat_id: int}}` |
-| | `"money"` | **M1 不使用**（不登记） |
+| | `"player"` | `{hp: int, sanity: int}` |
+| | `"money"` | `{gold: int, seals: int}` |
 
-> 键名即契约：新增 action / scope 必须先在这里登记。
+> 键名即契约：新增 action / panel / scope 必须先在这里登记。
 
 ---
 
@@ -312,9 +417,12 @@ signal state_changed(scope: String, payload: Dictionary)       # ③ 状态广�
 | 3 | 读数与覆盖率的"占比"按**元素单位**计 | 复现数值表 §5.8 算例（温润汤剂 0.58）的唯一口径 |
 | 4 | `visual()` 由 `temperature_c` 决定 0~5 级气泡/蒸气 | "气泡是唯一的温度反馈来源"（已定决策）的机器可读形态 |
 | 5 | 事件总线 `Events` 放 app 层；payload 键名登记制 | 引擎与编排解耦；键名漂移 = 破坏性变更 |
-| 6 | **Inventory 放内核**（`core/inventory.gd`） | 过程与编排共用，领域互不 import ⇒ 共享类型只能由内核定义 |
-| 7 | **M1 产物以 `Array[CraftResult]` 内存暂存，不进存档** | 物品契约（items.json）M2 才定；先物品化会提前污染契约 |
+| 6 | **Inventory / ProductInstance / Wallet 均放内核** | 过程与编排共用，领域互不 import ⇒ 共享类型只能由内核定义 |
+| 7 | **M2 成品模型 = `ProductInstance`**（携带 `CraftResult`，不可堆叠）；覆盖率和价格由 result 重算、不存派生值 | 每瓶药性质不同；存快照会与真实读数漂移 |
 | 8 | **炼制中允许换火候**；产物按最终温度重解；每次换档消费一次 `device` 流、不消费 `craft` 流 | 实现"气泡随火候变化"且不破坏材料池与随机流 |
 | 9 | 气泡 / 蒸气级别 = 温度所在档位序号（蒸气 = `max(0, i − 2)`） | 唯一温度反馈的最小可实现映射 |
-| 10 | `tick` 是时间推进的唯一入口，GameClock 不自行前进 | 无界面测试可逐 tick 重放；避免双时钟漂移 |
+| 10 | `tick` / `gather` 等用例是时间推进的唯一入口，GameClock 不自行前进 | 无界面测试可逐 tick 重放；避免双时钟漂移 |
 | 11 | **M1 拒绝未完成取出**（返回 null） | M1 验收不含"提前取出"；M2 再按设计文档 §7.2 开放 |
+| 12 | **P₀ 方案：配方 `base_price` 优先，乱投兜底 `pricing.mixture_base_price`** | 乱投没有配方，基准价必须有兜底（评审 D1 采纳推荐项）|
+| 13 | **M2 经济简化**：单件出售、不做货架配额/积压；覆盖率 < 0.5 → 价格为 0 且拒卖 | M2 验证的是"需求匹配"闭环，不是货架经营 |
+| 14 | **M2 场景范围：3 场景 + WASD + E 交互 + YSort 占位**；完整伪 3D 后置 | 结构与交互先跑通，表现不阻塞玩法（评审 D3 采纳推荐项）|

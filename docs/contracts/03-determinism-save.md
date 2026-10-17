@@ -69,11 +69,11 @@ func restore(data: Dictionary) -> void
   "spirit":    { "p": 0, "s": 0, "t": 0 },
   "money":     { "gold": 0, "seals": 0 },
   "inventory": { "mat_qinglucao": 3, "mat_taiyi": 1 },                      // 材料只记份数（见 01 契约 §5）
-  "products":  { },                                                          // M1 不存（产物在内存，见 02 §1.9）；M2 起 {itm_id: count}
+  "products":  [ ],                                                          // M2：ProductInstance 数组（不可堆叠）；M2 先存内存，持久化 M4 前补
   "knowledge": { "recipes": [], "locations": [], "concepts": [], "blueprints": [] },
   "letters":   { },                                                          // {ltr_id: {state, burn, repaired}}
   "crucible":  null,                                                         // 炼制中不允许存档 ⇒ 恒为 null
-  "nodes":     { },                                                          // {node_id: {regrow_at_day}}（M2 起）
+  "nodes":     { },                                                          // {node_id: {regrow_at_day}}；M2 先存内存，持久化 M4 前补
   "market":    { "reputation": "mid", "rolling_q": [], "day_stock": {} },    // M2 起
   "flags":     { },
   "rng":       { "craft": "0", "gather": "0", "device": "0", "market": "0", "event": "0", "letters": "0" }
@@ -99,7 +99,7 @@ func restore(data: Dictionary) -> void
 
 | 项 | 需要它的时机 |
 |---|---|
-| 存档路径 / 槽位 / `save()` / `load()` API（建议 `user://saves/slot_<n>.json`）| M2 |
+| 存档路径 / 槽位 / `save()` / `load()` API（建议 `user://saves/slot_<n>.json`）；M2 验收不要求；持久化需含 ProductInstance / 采集点 / 金币 | M4 前 |
 | `Economy.list_price` 的 `P₀` 出处（constants 或 items.json）| M2 |
 | `Knowledge.kind` 的 `blueprint` 与存档字段对齐（存档已加 `blueprints: []`）| M3 |
 | 事件 / 信件字段的机器可读化 | M3 |
