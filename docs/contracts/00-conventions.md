@@ -50,6 +50,8 @@ res://
 
 **唯一例外**：感知通道（`core/perception.gd`）——引擎层可以特许调用它取得"降级后的信息"（文字描述 / 精确读数 / 视觉标记）。除此之外引擎不许读内核数值。
 
+**第二个例外**：`src/app/events.gd` 作为 autoload **是唯一允许 `extends Node` 的 app 文件**——只放信号声明，不得含业务逻辑；其余 app 文件仍禁 Node。
+
 **执行方式**：`tests/test_layer_boundaries.gd` 扫描 `src/` 源码做静态检查（禁词表 + import 图检查），CI 与本地测试均运行。违反即测试失败。
 
 ---
@@ -61,6 +63,7 @@ res://
 - **拼音小写 + 类别前缀 + 下划线**，全仓库唯一，永不随显示名变化。
 - 中文名只作 `name` 字段（显示用）；代码、数据引用一律用 ID。
 - 不使用英文意译——90 种元素命名不唯一，拼音与中文名一一对应，最稳。
+- **例外**：系统枚举与编号沿用既定形式（`t_ice_bath`、`ltr_L02`）；美术素材的类别段用英文（`art_scene_workshop`）——它们不是中文名的拼音转写。
 
 ### 3.2 前缀表
 
@@ -80,6 +83,7 @@ res://
 | `node_` | 采集点 | `node_...` |
 | `flg_` | 状态旗标 | `flg_attic_open` |
 | `art_` | 美术素材（提示词文件与产出图共用此 ID） | `art_scene_workshop` |
+| `dev_` | 设备 | `dev_clay_crucible` |
 
 > **冲突示例**：变易（元素）与 变异（作用）拼音相同——`el_bianyi` / `eff_bianyi`，前缀隔离，合法。
 
@@ -149,6 +153,8 @@ res://
 | 日历 | `year:int(≥1)` · `season:int(0~3)` · `day:int(1~28)` · `hour:float(6.0~26.0)` | 26.0 = 次日 02:00 |
 | 金额 | 金币（int） / 炼金印记（int） | 悬空存储，不占背包格 |
 
+> **时长口径**：存储一律游戏分钟（int）；"小时"仅是**显示单位**。设计文档"全作统一小时制"指显示与叙述，不改变存储口径。
+
 ---
 
 ## 5. 命名约定
@@ -194,13 +200,14 @@ res://
 1. `schema_version` 与本仓库契约一致；
 2. 全库 ID 唯一；
 3. 引用完整性：`composition` / `spectrum` / `inputs` / `axis` 中出现的 ID 必须存在；
-4. `effects` 键 ∈ 16 作用词表，`costs` 键 ∈ 6 代价词表；
+4. `effects` / `costs` 的键 ∈ `constants.vocabulary` 的词表（`special_effects` 单独校验）；
 5. `spectrum` 比例之和 = 1 ± 1e-6；
 6. `kind="compound"` ⇒ `composition` 非空；`kind="base"` ⇒ `h` 非空；
 7. `delta_h` = Σ(系数 × 成分 `h`)，误差 ≤ 1e-6；
-8. `axis` 非空 ⇒ 成分恰为轴的两端；
+8. `axis` 非空 ⇒ ∈ `vocabulary.axes`，且成分恰为该轴的两端；
 9. 数值域：读数 ∈ [0,1]、`fluctuation` ∈ (0,0.5]、`price` ≥ 0、`element_total` ∈ [0.5,10]；
-10. `recipes.temperature_tier` ∈ 温度档表。
+10. `recipes.temperature_tier` ∈ 温度档表；
+11. `special_effects` 的 ID ∈ `vocabulary.special_effects`。
 
 任何一条失败 → 启动即报错并列出全部违规项（不静默跳过）。
 

@@ -90,6 +90,13 @@
   "fluctuation": 0.10, "price": 2, "habitat": "old_tree_root" }
 ```
 
+### 2.3 波动生成细则（投料时执行）
+
+- 每份材料：先掷 `总量 = element_total × U(1−σ, 1+σ)`；再对每个谱项乘 `U(1−σ, 1+σ)`，然后**归一化到 1**。
+- 随机数消费顺序：按 `materials.json` 的 `entries` 顺序逐份；同一份内按 `elements.json` 的 `entries` 顺序。
+- **投料顺序不影响结果**（消费顺序与玩家操作顺序无关）。
+- 随机流：`craft`（见 03 契约）。
+
 ---
 
 ## 3. `content/recipes.json`
@@ -131,6 +138,15 @@
 ```json
 {
   "schema_version": 1,
+
+  "device": {
+    "default_id": "dev_clay_crucible",
+    "dev_clay_crucible": {
+      "name": "陶土坩埚",
+      "temp_jitter_c": 50.0,
+      "has_readout": false
+    }
+  },
 
   "reaction": {
     "t_ref_c": 200.0,
@@ -211,6 +227,34 @@
     "puzzle_fallback_wrong_count": 10
   },
 
+  "vocabulary": {
+    "effects": {
+      "eff_xiufu": "修复", "eff_jifa": "激发", "eff_bianyi": "变异", "eff_zengzhi": "增殖",
+      "eff_rongjie": "溶解", "eff_runze": "润泽", "eff_gujie": "固结", "eff_kuosan": "扩散",
+      "eff_shentou": "渗透", "eff_yiran": "易燃", "eff_fangfu": "防腐", "eff_dingxu": "定序",
+      "eff_zhonghe": "中和"
+    },
+    "costs": {
+      "cost_zhuotong": "灼痛", "cost_chongdan": "冲淡", "cost_chizhi": "迟滞",
+      "cost_yishi": "逸失", "cost_yizhi": "抑制", "cost_buding": "不定"
+    },
+    "special_effects": { "eff_zhida": "直达", "eff_suqi": "速起", "eff_beili": "悖理" },
+    "axes": {
+      "axis_chiran_liuzhuan": ["el_chiran", "el_liuzhuan"],
+      "axis_ningding_misan": ["el_ningding", "el_misan"],
+      "axis_zhixu_bianyi": ["el_zhixu", "el_bianyi"]
+    }
+  },
+
+  "demo": {
+    "world_seed": 9173271,
+    "starting_inventory": {
+      "mat_qinglucao": 5, "mat_taiyi": 5, "mat_rongyanxie": 5, "mat_fengshisha": 5,
+      "mat_shiyingsha": 5, "mat_jibianjun": 5, "mat_shouzhi": 5, "mat_yingmu": 5,
+      "mat_luwei": 5, "mat_yanjing": 5, "mat_tongkuangshi": 5, "mat_tiekuangshi": 5
+    }
+  },
+
   "demand": {
     "spring_early": {
       "id": "dem_fali", "name": "乏力",
@@ -235,6 +279,9 @@
 | 3 | `recipes.target` 仅供显示与断言 | 防止实现者拿它当"产物"绕过求解器（违背架构 K1） |
 | 4 | `constants.json` 带 `demand` 组（虽是叙事/经济内容） | M2 的固定需求必须在数据里，否则"卖不掉"验收无输入 |
 | 5 | 材料波动同时作用于**总量与比例**（每份独立、均匀分布 U(1−σ, 1+σ)） | 复现数值表 §2.4 两个校验区间（10.5~13.5 与 6.5~8.2）的唯一口径 |
+| 6 | 词表与轴映射的机器可读出处 = `constants.vocabulary`（16 作用 / 6 代价 / 3 轴） | 校验与 M3 手记共用；词表不能只活在正文表格里 |
+| 7 | M1 产物只存内存 `Inventory.products`，不进存档 | items.json 属 M2；见 02 契约 §1.9 |
+| 8 | `constants.demo` 承载开局演示数据（世界种子、初始库存） | M1 无采集与商店；M2 起由采集替代，此组可删 |
 
 ---
 

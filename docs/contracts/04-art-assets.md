@@ -191,7 +191,7 @@ draft ──试生成 1~2 张、人工核对风格──▶ approved ──批�
 | `art_prop_water_basin` | prop | 水盆（蘸水交互） | M3 | todo |
 | `art_prop_bed` | prop | 床（睡眠存档） | M4 | todo |
 | `art_tile_forest_ground` | tile | 森林地表（草/土/苔） | M2 | todo |
-| `art_node_qinglucao` | prop | 清露草采集点（雾中） | M2 | todo |
+| `art_prop_qinglucao` | prop | 清露草采集点（雾中） | M2 | todo |
 | `art_prop_tree_set` | prop | 乔木 ×2 + 灌木 ×2 | M2 | todo |
 | `art_ui_letter_paper` | ui | 信件纸页（羊皮纸、撕裂边） | M3 | todo |
 | `art_ui_journal` | ui | 手记面板（配方 / 记录两页） | M3 | todo |

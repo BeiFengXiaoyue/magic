@@ -20,6 +20,7 @@ func restore(data: Dictionary) -> void
 
 - `world_seed: int`——新游戏时生成，写入存档，**永不变**。
 - 派生：`stream_seed(name) = hash("codex:%d:%s" % [world_seed, name])`。
+- **M1 固定种子**：`constants.demo.world_seed`（= 9173271）——用于复现与测试；M2 起新游戏随机生成。
 - 流清单（M1~M3）：
 
 | 流 | 消费点 |
@@ -68,14 +69,14 @@ func restore(data: Dictionary) -> void
   "spirit":    { "p": 0, "s": 0, "t": 0 },
   "money":     { "gold": 0, "seals": 0 },
   "inventory": { "mat_qinglucao": 3, "mat_taiyi": 1 },                      // 材料只记份数（见 01 契约 §5）
-  "products":  { },                                                          // 成品 {itm_id: count}（M2 起）
-  "knowledge": { "recipes": [], "locations": [], "concepts": [] },
+  "products":  { },                                                          // M1 不存（产物在内存，见 02 §1.9）；M2 起 {itm_id: count}
+  "knowledge": { "recipes": [], "locations": [], "concepts": [], "blueprints": [] },
   "letters":   { },                                                          // {ltr_id: {state, burn, repaired}}
   "crucible":  null,                                                         // 炼制中不允许存档 ⇒ 恒为 null
   "nodes":     { },                                                          // {node_id: {regrow_at_day}}（M2 起）
   "market":    { "reputation": "mid", "rolling_q": [], "day_stock": {} },    // M2 起
   "flags":     { },
-  "rng":       { "craft": 0, "gather": 0, "device": 0, "market": 0, "event": 0, "letters": 0 }
+  "rng":       { "craft": "0", "gather": "0", "device": "0", "market": "0", "event": "0", "letters": "0" }
 }
 ```
 
@@ -83,13 +84,26 @@ func restore(data: Dictionary) -> void
 |---|---|
 | 键名即契约 | 新增持久状态必须同时更新本节 + 存档测试 |
 | `rng` 存每条流的 `rng.state` | 恢复后连续消费与不存档时完全一致 |
+| `rng` 的 state 以**十进制字符串**存储 | Godot JSON 解析数字为 float，64 位 state 会被截断 |
 | 不存派生数据 | 覆盖率、价格、气泡级别等可以由状态重算的一律不存 |
 | `save_version` | 不等则拒绝加载并提示；迁移策略 v1 暂不实现 |
 
-### 3.3 待定事项（不阻塞 M1~M3）
+### 3.3 待定与待补清单
+
+**机制待裁决**
 
 - **跨日炼制（T4）期间的存档**：设计文档写"炼制中不可存档"，而 T4 跨日又必须睡觉——两者冲突将在 M4（T4 进入视野）前裁决。Demo 不存在该情形。
 - 手动存档 / 多档位 UI：M4+。
+
+**接口待补（不阻塞 M1）**
+
+| 项 | 需要它的时机 |
+|---|---|
+| 存档路径 / 槽位 / `save()` / `load()` API（建议 `user://saves/slot_<n>.json`）| M2 |
+| `Economy.list_price` 的 `P₀` 出处（constants 或 items.json）| M2 |
+| `Knowledge.kind` 的 `blueprint` 与存档字段对齐（存档已加 `blueprints: []`）| M3 |
+| 事件 / 信件字段的机器可读化 | M3 |
+| CI 配置 / `.editorconfig` / 仓库 AGENTS.md | 后置 |
 
 ---
 
@@ -101,3 +115,4 @@ func restore(data: Dictionary) -> void
 | 2 | 存档用 JSON | 与 `content/` 同格式族，人可读、可 diff、可手工造测试档 |
 | 3 | `crucible` 字段恒 `null`（因炼制中禁存档） | 把"禁止"变成结构上不可能，而非运行时检查 |
 | 4 | 换种子必须改变结果（测试显式断言） | 防止"确定性"被实现成"写死" |
+| 5 | `rng` 的 state 存十进制字符串 | Godot JSON 解析数字为 float，64 位 state 会丢精度 |
