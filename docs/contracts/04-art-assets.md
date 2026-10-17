@@ -30,9 +30,10 @@
 ### 1.2 生产流程（每次照做）
 
 1. 打开素材的 `.md`，确认 `status: approved`；
-2. ComfyUI 载入 `generate img.json`，粘贴正/负提示词，按需换参考图；
-3. 出图 → 存为 `assets/generated/<category>/<art_id>.png`；
-4. 回填 `seed`（与 `canvas`、参考图），`status: generated` → 提交。
+2. ComfyUI 载入 `generate img.json`，粘贴正/负提示词，按需换参考图（建议把 SaveImage 的 `filename_prefix` 填为 `art_id`）；
+3. 出图 → 按 ID 改名，存入 `assets/raw/<category>/<art_id>.png`（多版加 `__s<seed>` 后缀）；
+4. 后处理（抠底 / 裁边 / 缩放至美术 §14.1 规格）→ 存入 `assets/textures/<category>/<art_id>.png`；
+5. 回填 `seed`（与 `canvas`、参考图），`status: generated` → 提交。
 
 ---
 
@@ -40,19 +41,30 @@
 
 ```
 assets/
-├─ prompts/                     ★ 提示词（源数据，进 git）
-│  ├─ _style.md                 全局风格前缀 + 通用负向（唯一出处）
-│  ├─ scene/  char/  prop/  tile/  ui/  mob/  fx/
-│  │  └─ <art_id>.md            一个素材一个文件
-├─ refs/                        参考图（可空；进 git）
-│  └─ <art_id>.(png|jpg)
-└─ generated/                   ★ 产出图（进 git）
+├─ prompts/                    ★ 提示词（源数据）
+│  ├─ _style.md                全局风格前缀 + 通用负向（唯一出处）
+│  └─ <category>/<art_id>.md   一个素材一个文件
+├─ refs/                       ★ 参考图（风格迁移输入）
+│  └─ <art_id>.(png|jpg|webp)
+├─ raw/                        ★ 生成原图（AI 直接输出，保真留档）
+│  └─ <category>/<art_id>.png
+└─ textures/                   ★ 游戏成品（Godot 唯一导入的素材目录）
    └─ <category>/<art_id>.png
 ```
 
-- `prompts/` 与 `refs/` 各放一个空文件 `.gdignore`——Godot 不导入这两棵子树（避免无谓的纹理导入）。
-- `generated/` **会被 Godot 导入**（它们就是游戏资产）。
-- 引用方式：代码与数据一律用 `art_id`，路径由 `res://assets/generated/<category>/<art_id>.png` 推导，**不得**在代码里写死文件名。
+| 目录 | 内容 | Godot 导入 | 进 git | 命名 |
+|---|---|---|---|---|
+| `prompts/` | 提示词 + 风格前缀 | ✗（`.gdignore`）| ✅ | `<art_id>.md` |
+| `refs/` | 参考图 | ✗（`.gdignore`）| ✅ | `<art_id>.<ext>` |
+| `raw/` | AI 原始输出（未处理） | ✗（`.gdignore`）| ✅ | `<art_id>.png`；多版 `<art_id>__s<seed>.png` |
+| `textures/` | 抠底 / 缩放后的成品 | ✅ | ✅ | `<art_id>.png` |
+
+**四条硬规则**：
+
+1. **提示词只存在 `prompts/`**，文件名 = `art_id`，与 `raw/`、`textures/` 的 `<art_id>` 一一对应。
+2. **`raw/` 是可复现的源**：一律保存 AI 原始输出（原尺寸、原背景），**永不直接进游戏**。
+3. **`textures/` 是游戏唯一引用的素材目录**：后处理（抠底、裁边、缩放至美术 §14.1 规格）后的成品放这里；切帧 / 图集在 Godot 内配置，不额外产生文件。
+4. **引用方式**：代码与数据一律用 `art_id`，路径由 `res://assets/textures/<category>/<art_id>.png` 推导，**不得**写死文件名。
 
 ---
 
@@ -204,3 +216,5 @@ draft ──试生成 1~2 张、人工核对风格──▶ approved ──批�
 | 4 | 素材 ID 采用 `art_` + 拼音 slug | 与项目既有 ID 纪律（00 契约 §3）一致 |
 | 5 | `prompts/` 与 `refs/` 放 `.gdignore` | 防止 Godot 把源数据当资产导入 |
 | 6 | **风格前缀验证前不批产** | 前缀是全局乘数，错了会全库返工 |
+| 7 | **生成资源分两级：`raw/`（原图）与 `textures/`（成品）** | 原图保真可复现、不进游戏包；引擎只引用成品，来源与产物不混 |
+| 8 | 后处理不产生新 art_id | 成品与源共用一个 ID，追溯简单（提示词 → raw → textures 同名） |
