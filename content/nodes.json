@@ -6,7 +6,7 @@
       "material_id": "mat_qinglucao",
       "tier": 1,
       "scene": "scene_forest",
-      "position": { "x": 320, "y": 480 },
+      "position": { "x": 900, "y": 900 },
       "action": "gather",
       "amount": 3
     },
@@ -15,7 +15,7 @@
       "material_id": "mat_qinglucao",
       "tier": 1,
       "scene": "scene_forest",
-      "position": { "x": 560, "y": 520 },
+      "position": { "x": 1600, "y": 1400 },
       "action": "gather",
       "amount": 3
     },
@@ -24,7 +24,7 @@
       "material_id": "mat_taiyi",
       "tier": 1,
       "scene": "scene_forest",
-      "position": { "x": 760, "y": 320 },
+      "position": { "x": 1200, "y": 1900 },
       "action": "gather",
       "amount": 1
     },
@@ -33,7 +33,7 @@
       "material_id": "mat_taiyi",
       "tier": 1,
       "scene": "scene_forest",
-      "position": { "x": 900, "y": 540 },
+      "position": { "x": 2400, "y": 1000 },
       "action": "gather",
       "amount": 1
     },
@@ -42,7 +42,7 @@
       "material_id": "mat_shiyingsha",
       "tier": 1,
       "scene": "scene_forest",
-      "position": { "x": 420, "y": 700 },
+      "position": { "x": 2200, "y": 1900 },
       "action": "gather",
       "amount": 1
     },
@@ -51,7 +51,7 @@
       "material_id": "mat_fengshisha",
       "tier": 1,
       "scene": "scene_forest",
-      "position": { "x": 980, "y": 720 },
+      "position": { "x": 2800, "y": 600 },
       "action": "gather",
       "amount": 1
     }

@@ -11,6 +11,7 @@ const MINUTES_PER_HOUR := 60.0
 const TIME_FORMAT := "%02d:%02d · %s"
 const CRUCIBLE_PANEL_SIZE := Vector2(1180.0, 680.0)
 const SHOP_PANEL_SIZE := Vector2(660.0, 420.0)
+const UI_LAYER := 10
 
 var _db: ContentDatabase
 var _rng: DeterministicRng
@@ -30,6 +31,8 @@ var _sell: SellUseCase
 var _interact: InteractUseCase
 
 var _world: WorldView
+var _ui_layer: CanvasLayer
+var _ui_root: Control
 var _hud: GameHud
 var _shelf: MaterialShelf
 var _crucible: CruciblePanel
@@ -88,8 +91,19 @@ func _build_world_ui() -> void:
 	_world = WorldView.new()
 	_world.y_sort_enabled = true
 	add_child(_world)
+
+	_ui_layer = CanvasLayer.new()
+	_ui_layer.layer = UI_LAYER
+	add_child(_ui_layer)
+
+	_ui_root = Control.new()
+	_ui_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_ui_root.theme = theme
+	_ui_layer.add_child(_ui_root)
+	_ui_root.set_anchors_preset(Control.PRESET_FULL_RECT)
+
 	_hud = GameHud.new()
-	add_child(_hud)
+	_ui_root.add_child(_hud)
 	_hud.setup()
 
 
@@ -144,7 +158,7 @@ func _make_overlay() -> CenterContainer:
 	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	overlay.visible = false
 	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
-	add_child(overlay)
+	_ui_root.add_child(overlay)
 	return overlay
 
 

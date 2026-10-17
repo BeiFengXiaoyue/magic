@@ -1,24 +1,45 @@
 class_name Player
 extends Node2D
 
-## 占位角色：WASD / 方向键移动，边界限制在 1280×720 内。
+## 占位角色：WASD / 方向键移动；位置限制在当前场景的可行走矩形内；
+## Camera2D 跟随玩家，室内由 limits 固定视角，森林则滚动大地图。
 
 const RADIUS := 14.0
 const SPEED := 220.0
 const MARGIN := 24.0
-const SCENE_WIDTH := 1280.0
-const SCENE_HEIGHT := 720.0
+const CAMERA_SMOOTH_SPEED := 8.0
 const COLOR := Color("#e6dcc8")
 
 var _input_enabled: bool = true
+var _bounds: Rect2 = Rect2(0.0, 0.0, 1280.0, 720.0)
+var _camera: Camera2D
 
 
 func _ready() -> void:
 	z_index = 10
+	_camera = Camera2D.new()
+	_camera.position_smoothing_enabled = true
+	_camera.position_smoothing_speed = CAMERA_SMOOTH_SPEED
+	add_child(_camera)
+	_camera.make_current()
 
 
 func set_input_enabled(enabled: bool) -> void:
 	_input_enabled = enabled
+
+
+func set_bounds(bounds: Rect2) -> void:
+	_bounds = bounds
+
+
+func set_camera_limits(camera_rect: Rect2) -> void:
+	if _camera == null:
+		return
+	_camera.limit_left = int(camera_rect.position.x)
+	_camera.limit_top = int(camera_rect.position.y)
+	_camera.limit_right = int(camera_rect.end.x)
+	_camera.limit_bottom = int(camera_rect.end.y)
+	_camera.reset_smoothing()
 
 
 func _process(delta: float) -> void:
@@ -36,8 +57,8 @@ func _process(delta: float) -> void:
 	if direction == Vector2.ZERO:
 		return
 	position += direction.normalized() * SPEED * delta
-	position.x = clampf(position.x, MARGIN, SCENE_WIDTH - MARGIN)
-	position.y = clampf(position.y, MARGIN, SCENE_HEIGHT - MARGIN)
+	position.x = clampf(position.x, _bounds.position.x + MARGIN, _bounds.end.x - MARGIN)
+	position.y = clampf(position.y, _bounds.position.y + MARGIN, _bounds.end.y - MARGIN)
 
 
 func _draw() -> void:
