@@ -1,6 +1,6 @@
 # 00 · 命名与工程规范
 
-> **状态：草案 v0.1**
+> **状态：草案 v0.2**（M2 补入 items/nodes/forest 与场景前缀）
 > 依据：`04-技术/架构设计.md` §2/§3 · `02-玩法/数值表.md` §5.1 · `02-玩法/反应与条件.md` §2
 >
 > 本契约是所有其他契约与代码共用的底座：ID、单位、目录、命名、纪律。
@@ -29,7 +29,8 @@ res://
 │  ├─ materials.json       12 种（Demo 首批）
 │  ├─ recipes.json         配方
 │  ├─ items.json           物品大类（M2）
-│  ├─ nodes.json           采集点（M2）
+│  ├─ nodes.json           固定采集点（M2）
+│  ├─ forest.json          森林地图与野生刷新规则（M2）
 │  └─ constants.json       全部常量（数值表 §5 的机器可读形态）
 ├─ src/
 │  ├─ core/                共享内核
@@ -199,6 +200,7 @@ res://
 ```
 
 `constants.json` 例外：无 `entries`，为分组键值结构（见 01 契约）。
+`forest.json` 例外：单对象地图文件（`schema_version` + 地图字段），无 `entries`（见 01 §3.7）。
 
 ### 7.2 载入校验清单（`ContentDatabase` 启动时强制执行）
 
@@ -215,7 +217,8 @@ res://
 11. `special_effects` 的 ID ∈ `vocabulary.special_effects`；
 12. `recipes.base_price` 为非负整数（M2 定价）；
 13. `items.json`：ID 以 `itm_` 开头、`category` ∈ {potion, residue}、`stackable` 为 bool；
-14. `nodes.json`：`material_id` 存在、`tier` ∈ 1~3、`scene` ∈ M2 三场景、`position` 含 x/y、`action` ∈ {gather, chop_or_mine}、`amount` ≥ 1。
+14. `nodes.json`：`material_id` 存在、`tier` ∈ 1~3、`scene` ∈ M2 三场景、`position` 含 x/y、`action` ∈ {gather, chop_or_mine}、`amount` ≥ 1；
+15. `forest.json`：scene/size/spawn/door、scenery、spawn_zones、wild_spawners 的引用与范围合法（见 01 §3.7）。
 
 任何一条失败 → 启动即报错并列出全部违规项（不静默跳过）。
 

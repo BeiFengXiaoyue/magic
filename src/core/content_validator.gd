@@ -11,7 +11,9 @@ const MAX_ELEMENT_TOTAL := 10.0  # no-magic-ok: 契约 00 §7.2 数值域上限
 const MAX_FLUCTUATION := 0.5  # no-magic-ok: 契约 00 §7.2 fluctuation 上限
 const MAX_TIER := 4  # no-magic-ok: 契约 tier 1~4
 const MAX_GATHER_TIER := 3  # no-magic-ok: 采集阶只有 1~3（数值表 §5.4）
+const MIN_POLYGON_POINTS := 3  # no-magic-ok: 多边形至少三个点
 const SCENES: Array[String] = ["scene_workshop", "scene_shop", "scene_forest"]
+const VALID_SCENERY_KINDS: Array[String] = ["tree", "rock", "bush"]
 
 var errors: Array[String] = []
 var elements: Dictionary = {}
@@ -19,6 +21,7 @@ var materials: Dictionary = {}
 var recipes: Dictionary = {}
 var items: Dictionary = {}
 var nodes: Dictionary = {}
+var forest: Dictionary = {}
 var constants: Dictionary = {}
 var element_order: Dictionary = {}
 
@@ -36,6 +39,7 @@ func validate(
 	recipes_doc: Variant,
 	items_doc: Variant,
 	nodes_doc: Variant,
+	forest_doc: Variant,
 	constants_doc: Variant
 ) -> Array[String]:
 	_reset()
@@ -44,6 +48,8 @@ func validate(
 	_index(recipes_doc, "recipes.json", recipes, {})
 	_index(items_doc, "items.json", items, {})
 	_index(nodes_doc, "nodes.json", nodes, {})
+	if forest_doc is Dictionary:
+		forest = forest_doc
 	if constants_doc is Dictionary:
 		constants = constants_doc
 	_validate_constants()
@@ -52,6 +58,7 @@ func validate(
 	_validate_recipes()
 	_validate_items()
 	_validate_nodes()
+	_validate_forest()
 	return errors
 
 
@@ -62,6 +69,7 @@ func _reset() -> void:
 	recipes.clear()
 	items.clear()
 	nodes.clear()
+	forest.clear()
 	constants.clear()
 	element_order.clear()
 	_seen_ids.clear()
@@ -443,6 +451,216 @@ func _validate_nodes() -> void:
 		var amount: Variant = entry.get("amount", null)
 		if not _is_number(amount) or int(amount) < 1 or float(amount) != floor(float(amount)):
 			error("nodes.json: %s 的 amount 应为正整数" % str(id))
+
+
+func _validate_forest() -> void:
+	if forest.is_empty():
+		error("forest.json: 未载入")
+		return
+	var version: Variant = forest.get("schema_version", null)
+	if version == null or int(version) != SCHEMA_VERSION:
+		error("forest.json: schema_version 应为 %d" % SCHEMA_VERSION)
+	var scene: Variant = forest.get("scene", null)
+	if not scene is String or not SCENES.has(scene):
+		error("forest.json: scene 无效")
+	var size := _forest_size()
+	if size.x <= 0.0 or size.y <= 0.0:
+		error("forest.json: size 无效")
+		return
+	var margin: Variant = forest.get("walk_margin", null)
+	if not _is_number(margin) or float(margin) < 0.0 or float(margin) * 2.0 >= size.x or float(margin) * 2.0 >= size.y:
+		error("forest.json: walk_margin 无效")
+	_validate_forest_position("spawn", forest.get("spawn", null), size)
+	_validate_forest_position("door", forest.get("door", null), size)
+	_validate_forest_background()
+	_validate_forest_scenery(size)
+	var zone_habitats := _validate_forest_zones(size)
+	_validate_forest_spawners(zone_habitats)
+
+
+func _forest_size() -> Vector2:
+	var data: Variant = forest.get("size", null)
+	if not data is Dictionary:
+		return Vector2.ZERO
+	var x: Variant = data.get("x", null)
+	var y: Variant = data.get("y", null)
+	if not _is_number(x) or not _is_number(y):
+		return Vector2.ZERO
+	return Vector2(float(x), float(y))
+
+
+func _validate_forest_position(label: String, value: Variant, size: Vector2) -> void:
+	if not value is Dictionary:
+		error("forest.json: %s 缺少坐标" % label)
+		return
+	var x: Variant = value.get("x", null)
+	var y: Variant = value.get("y", null)
+	if not _is_number(x) or not _is_number(y):
+		error("forest.json: %s 的 x/y 无效" % label)
+		return
+	if float(x) < 0.0 or float(y) < 0.0 or float(x) > size.x or float(y) > size.y:
+		error("forest.json: %s 超出地图" % label)
+
+
+func _validate_forest_background() -> void:
+	var background: Variant = forest.get("background", null)
+	if not background is Dictionary:
+		error("forest.json: 缺少 background")
+		return
+	var art_id: Variant = background.get("art_id", null)
+	if not art_id is String:
+		error("forest.json: background.art_id 应为字符串")
+	var fallback_color: Variant = background.get("fallback_color", null)
+	if not fallback_color is String:
+		error("forest.json: background.fallback_color 应为字符串")
+
+
+func _validate_forest_scenery(size: Vector2) -> void:
+	var scenery: Variant = forest.get("scenery", null)
+	if not scenery is Array:
+		error("forest.json: scenery 应为数组")
+		return
+	var ids: Dictionary = {}
+	for item in scenery:
+		if not item is Dictionary:
+			error("forest.json: scenery 含非对象项")
+			continue
+		var item_id: Variant = item.get("id", null)
+		if not item_id is String:
+			error("forest.json: scenery 缺少 id")
+			continue
+		if ids.has(item_id):
+			error("forest.json: scenery ID 重复: %s" % str(item_id))
+		ids[str(item_id)] = true
+		var kind: Variant = item.get("kind", null)
+		if not kind is String or not VALID_SCENERY_KINDS.has(kind):
+			error("forest.json: %s 的 kind 无效" % str(item_id))
+		var scale: Variant = item.get("scale", 1.0)
+		if not _is_number(scale) or float(scale) <= 0.0:
+			error("forest.json: %s 的 scale 无效" % str(item_id))
+		var radius: Variant = item.get("collision_radius", 0.0)
+		if not _is_number(radius) or float(radius) < 0.0:
+			error("forest.json: %s 的 collision_radius 无效" % str(item_id))
+		var art_id: Variant = item.get("art_id", "")
+		if not art_id is String:
+			error("forest.json: %s 的 art_id 应为字符串" % str(item_id))
+		_validate_forest_position("scenery.%s" % str(item_id), item.get("position", null), size)
+
+
+func _validate_forest_zones(size: Vector2) -> Dictionary:
+	var zones: Variant = forest.get("spawn_zones", null)
+	if not zones is Array or zones.is_empty():
+		error("forest.json: spawn_zones 不能为空")
+		return {}
+	var ids: Dictionary = {}
+	var habitats: Dictionary = {}
+	for zone in zones:
+		if not zone is Dictionary:
+			error("forest.json: spawn_zones 含非对象项")
+			continue
+		var zone_id: Variant = zone.get("id", null)
+		if not zone_id is String:
+			error("forest.json: spawn_zones 缺少 id")
+			continue
+		if ids.has(zone_id):
+			error("forest.json: spawn zone ID 重复: %s" % str(zone_id))
+		ids[str(zone_id)] = true
+		var habitat: Variant = zone.get("habitat", null)
+		if not habitat is String:
+			error("forest.json: %s 缺少 habitat" % str(zone_id))
+		else:
+			habitats[str(habitat)] = true
+		var shape: Variant = zone.get("shape", null)
+		if not shape is Dictionary:
+			error("forest.json: %s 缺少 shape" % str(zone_id))
+			continue
+		var shape_type: Variant = shape.get("type", null)
+		if shape_type == "rect":
+			_validate_forest_rect(str(zone_id), shape, size)
+		elif shape_type == "polygon":
+			_validate_forest_polygon(str(zone_id), shape, size)
+		else:
+			error("forest.json: %s 的 shape.type 无效" % str(zone_id))
+	return habitats
+
+
+func _validate_forest_rect(label: String, shape: Dictionary, size: Vector2) -> void:
+	var x: Variant = shape.get("x", null)
+	var y: Variant = shape.get("y", null)
+	var w: Variant = shape.get("w", null)
+	var h: Variant = shape.get("h", null)
+	if not _is_number(x) or not _is_number(y) or not _is_number(w) or not _is_number(h):
+		error("forest.json: %s 的矩形无效" % label)
+		return
+	if float(w) <= 0.0 or float(h) <= 0.0 or float(x) < 0.0 or float(y) < 0.0:
+		error("forest.json: %s 的矩形范围无效" % label)
+		return
+	if float(x) + float(w) > size.x or float(y) + float(h) > size.y:
+		error("forest.json: %s 的矩形超出地图" % label)
+
+
+func _validate_forest_polygon(label: String, shape: Dictionary, size: Vector2) -> void:
+	var points: Variant = shape.get("points", null)
+	if not points is Array or points.size() < MIN_POLYGON_POINTS:
+		error("forest.json: %s 的多边形点数不足" % label)
+		return
+	for point in points:
+		if not point is Dictionary:
+			error("forest.json: %s 的多边形点无效" % label)
+			continue
+		var x: Variant = point.get("x", null)
+		var y: Variant = point.get("y", null)
+		if not _is_number(x) or not _is_number(y):
+			error("forest.json: %s 的多边形点坐标无效" % label)
+			continue
+		if float(x) < 0.0 or float(y) < 0.0 or float(x) > size.x or float(y) > size.y:
+			error("forest.json: %s 的多边形点超出地图" % label)
+
+
+func _validate_forest_spawners(zone_habitats: Dictionary) -> void:
+	var spawners: Variant = forest.get("wild_spawners", null)
+	if not spawners is Array or spawners.is_empty():
+		error("forest.json: wild_spawners 不能为空")
+		return
+	var ids: Dictionary = {}
+	for spawner in spawners:
+		if not spawner is Dictionary:
+			error("forest.json: wild_spawners 含非对象项")
+			continue
+		var spawner_id: Variant = spawner.get("id", null)
+		if not spawner_id is String:
+			error("forest.json: wild_spawners 缺少 id")
+			continue
+		if ids.has(spawner_id):
+			error("forest.json: wild_spawner ID 重复: %s" % str(spawner_id))
+		ids[str(spawner_id)] = true
+		var material_id: Variant = spawner.get("material_id", null)
+		if not material_id is String or not materials.has(material_id):
+			error("forest.json: %s 的 material_id 不存在" % str(spawner_id))
+		var tier: Variant = spawner.get("tier", null)
+		if not _is_number(tier) or int(tier) < 1 or int(tier) > MAX_GATHER_TIER:
+			error("forest.json: %s 的 tier 无效" % str(spawner_id))
+		var action: Variant = spawner.get("action", null)
+		if not action is String or not (action == "gather" or action == "chop_or_mine"):
+			error("forest.json: %s 的 action 无效" % str(spawner_id))
+		var amount: Variant = spawner.get("amount", null)
+		if not _is_number(amount) or int(amount) < 1:
+			error("forest.json: %s 的 amount 无效" % str(spawner_id))
+		var count: Variant = spawner.get("count", null)
+		if not _is_number(count) or int(count) < 1:
+			error("forest.json: %s 的 count 无效" % str(spawner_id))
+		var habitats: Variant = spawner.get("habitats", null)
+		if not habitats is Array or habitats.is_empty():
+			error("forest.json: %s 缺少 habitats" % str(spawner_id))
+		else:
+			for habitat in habitats:
+				if not habitat is String:
+					error("forest.json: %s 的 habitat 无效" % str(spawner_id))
+				elif not zone_habitats.has(habitat):
+					error("forest.json: %s 的 habitat %s 没有对应区域" % [str(spawner_id), str(habitat)])
+		var min_distance: Variant = spawner.get("min_distance", null)
+		if not _is_number(min_distance) or float(min_distance) < 0.0:
+			error("forest.json: %s 的 min_distance 无效" % str(spawner_id))
 
 
 func error(message: String) -> void:

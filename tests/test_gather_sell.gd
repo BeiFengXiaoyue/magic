@@ -1,6 +1,6 @@
 extends RefCounted
 
-## M2 闭环：采集 → 炼制 → 卖出；需求错配卖不掉。
+## M2 闭环：采集（固定 + 野生）→ 炼制 → 卖出；需求错配卖不掉。
 
 
 func run(ctx: TestContext) -> void:
@@ -18,26 +18,22 @@ func run(ctx: TestContext) -> void:
 	var gather_process := GatherProcess.new(db)
 	var craft_process := CraftProcess.new(db, rng, solver)
 	var economy := Economy.new(db)
-	var gather := GatherUseCase.new(db, gather_process, inventory, character, clock, rng, null)
+	var wild := WildSpawner.new(db, rng)
+	var gather := GatherUseCase.new(
+		db, gather_process, inventory, character, clock, rng, wild, null
+	)
 	var craft := CraftUseCase.new(db, clock, inventory, craft_process, null)
 	var sell := SellUseCase.new(db, economy, inventory, wallet, clock, null)
 
 	var sanity_before := character.sanity
 	var minute_before := clock.minute_of_day
-	var regrown_node := ""
-	for node_id in ["node_qinglucao_01", "node_qinglucao_02", "node_taiyi_01"]:
-		for _attempt in 10:
-			var outcome := gather.gather(node_id)
-			if bool(outcome["success"]):
-				regrown_node = node_id
-				break
+	_gather_wild(ctx, gather, inventory, "mat_qinglucao", 6, "清露草")
+	_gather_wild(ctx, gather, inventory, "mat_fengshisha", 1, "风蚀砂")
+	_gather_fixed(ctx, gather, inventory, "node_taiyi_01", "mat_taiyi", 1, "苔衣")
 
-	ctx.check(inventory.count_material("mat_qinglucao") >= 3, "应采到至少 3 份清露草")
-	ctx.check(inventory.count_material("mat_taiyi") >= 1, "应采到至少 1 份苔衣")
 	ctx.check(character.sanity < sanity_before, "采集应扣理智")
 	ctx.check(clock.minute_of_day > minute_before, "采集应推进时间")
-	if regrown_node != "":
-		ctx.check_eq(str(gather.gather(regrown_node)["reason"]), "regrowing", "采集后节点应进入再生")
+	ctx.check_eq(str(gather.gather("node_taiyi_01")["reason"]), "regrowing", "固定点采集后应再生")
 
 	var session_id := craft.begin({ "mat_qinglucao": 3, "mat_taiyi": 1 }, "t_low_flame")
 	ctx.check(session_id != "", "应能开始炼制温润汤剂")
@@ -59,8 +55,6 @@ func run(ctx: TestContext) -> void:
 	ctx.check(wallet.gold > 0, "卖出应增加金币")
 	ctx.check_eq(inventory.products.size(), 0, "卖出应移除成品")
 
-	inventory.add_material("mat_qinglucao", 3)
-	inventory.add_material("mat_fengshisha", 1)
 	var mismatch_session := craft.begin({ "mat_qinglucao": 3, "mat_fengshisha": 1 }, "t_low_flame")
 	ctx.check(mismatch_session != "", "应能开始炼制杂配酊")
 	craft.tick(60)
@@ -70,3 +64,49 @@ func run(ctx: TestContext) -> void:
 	var mismatch_sold := sell.sell(0)
 	ctx.check(not bool(mismatch_sold["sold"]), "杂配酊应卖不掉")
 	ctx.check_eq(str(mismatch_sold["reason"]), "no_demand", "卖不掉原因")
+
+
+func _gather_wild(
+	ctx: TestContext,
+	gather: GatherUseCase,
+	inventory: Inventory,
+	material_id: String,
+	required: int,
+	label: String
+) -> void:
+	var attempts := 0
+	while inventory.count_material(material_id) < required and attempts < 60:
+		attempts += 1
+		var target: Dictionary = {}
+		for entry in gather.wild_nodes("scene_forest"):
+			if str(entry.get("material_id", "")) == material_id:
+				target = entry
+				break
+		if target.is_empty():
+			break
+		gather.gather(str(target["id"]))
+	ctx.check(
+		inventory.count_material(material_id) >= required,
+		"应采到足够的%s（实际 %d）" % [label, inventory.count_material(material_id)]
+	)
+
+
+func _gather_fixed(
+	ctx: TestContext,
+	gather: GatherUseCase,
+	inventory: Inventory,
+	node_id: String,
+	material_id: String,
+	required: int,
+	label: String
+) -> void:
+	var attempts := 0
+	while inventory.count_material(material_id) < required and attempts < 20:
+		attempts += 1
+		var result := gather.gather(node_id)
+		if str(result.get("reason", "")) == "regrowing":
+			break
+	ctx.check(
+		inventory.count_material(material_id) >= required,
+		"应采到足够的%s（实际 %d）" % [label, inventory.count_material(material_id)]
+	)

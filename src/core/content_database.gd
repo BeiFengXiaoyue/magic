@@ -11,6 +11,7 @@ var _materials: Dictionary = {}
 var _recipes: Dictionary = {}
 var _items: Dictionary = {}
 var _nodes: Dictionary = {}
+var _forest: Dictionary = {}
 var _constants: Dictionary = {}
 var _element_order: Dictionary = {}
 
@@ -22,15 +23,25 @@ func load_all(path: String = "res://content") -> void:
 	var recipes_doc: Variant = _read_json(path.path_join("recipes.json"), "recipes.json")
 	var items_doc: Variant = _read_json(path.path_join("items.json"), "items.json")
 	var nodes_doc: Variant = _read_json(path.path_join("nodes.json"), "nodes.json")
+	var forest_doc: Variant = _read_json(path.path_join("forest.json"), "forest.json")
 	var constants_doc: Variant = _read_json(path.path_join("constants.json"), "constants.json")
 
 	var validator := ContentValidator.new()
-	errors = validator.validate(elements_doc, materials_doc, recipes_doc, items_doc, nodes_doc, constants_doc)
+	errors = validator.validate(
+		elements_doc,
+		materials_doc,
+		recipes_doc,
+		items_doc,
+		nodes_doc,
+		forest_doc,
+		constants_doc
+	)
 	_elements = validator.elements
 	_materials = validator.materials
 	_recipes = validator.recipes
 	_items = validator.items
 	_nodes = validator.nodes
+	_forest = validator.forest
 	_constants = validator.constants
 	_element_order = validator.element_order
 
@@ -71,6 +82,17 @@ func node(id: String) -> Dictionary:
 		push_error("ContentDatabase: 未知采集点 %s" % id)
 		return {}
 	return _nodes[id]
+
+
+func has_node(id: String) -> bool:
+	return _nodes.has(id)
+
+
+func forest() -> Dictionary:
+	if _forest.is_empty():
+		push_error("ContentDatabase: forest.json 尚未载入")
+		return {}
+	return _forest
 
 
 func constant(path: String) -> Variant:
@@ -128,6 +150,7 @@ func _reset() -> void:
 	_recipes.clear()
 	_items.clear()
 	_nodes.clear()
+	_forest.clear()
 	_constants.clear()
 	_element_order.clear()
 

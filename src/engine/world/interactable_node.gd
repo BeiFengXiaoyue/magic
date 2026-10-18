@@ -4,15 +4,18 @@ extends Node2D
 ## 场景里可交互的占位物：坩埚、柜台、床、门、采集点。
 
 const RADIUS := 18.0
+const WILD_RADIUS := 14.0
 const COLOR_DEFAULT := Color("#d98c3f")
 const COLOR_DOOR := Color("#8a6a4a")
 const COLOR_DOOR_FRAME := Color("#2a1f16")
 const COLOR_NODE := Color("#6f9a5a")
+const COLOR_WILD := Color("#b7d27a")
 const COLOR_UNAVAILABLE := Color("#4a4a4a")
 
 var target_id: String = ""
 var label: String = ""
 var kind: String = ""
+var wild: bool = false
 
 var _available: bool = true
 var _base_color: Color = COLOR_DEFAULT
@@ -34,6 +37,13 @@ func set_available(value: bool) -> void:
 	queue_redraw()
 
 
+func set_wild(value: bool) -> void:
+	wild = value
+	if wild:
+		_base_color = COLOR_WILD
+	queue_redraw()
+
+
 func _draw() -> void:
 	var color := _base_color if _available else COLOR_UNAVAILABLE
 	if kind == "door":
@@ -44,4 +54,7 @@ func _draw() -> void:
 	elif kind == "bed":
 		draw_rect(Rect2(-32.0, -20.0, 64.0, 40.0), color)
 	else:
-		draw_circle(Vector2.ZERO, RADIUS, color)
+		var radius := WILD_RADIUS if wild else RADIUS
+		draw_circle(Vector2.ZERO, radius, color)
+		if wild:
+			draw_arc(Vector2.ZERO, radius + 4.0, 0.0, TAU, 20, Color(color, 0.45), 2.0)

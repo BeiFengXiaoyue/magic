@@ -55,6 +55,10 @@ func publish_nodes(unavailable: Array[String]) -> void:
 	_emit("state_changed", "nodes", { "unavailable": unavailable })
 
 
+func publish_wild(scene_id: String, nodes: Array) -> void:
+	_emit("state_changed", "wild", { "scene_id": scene_id, "nodes": nodes })
+
+
 func publish_panel(panel: String, params: Dictionary) -> void:
 	if _event_bus == null:
 		return

@@ -27,6 +27,7 @@ var _wallet: Wallet
 var _gather_process: GatherProcess
 var _economy: Economy
 var _gather: GatherUseCase
+var _wild_spawner: WildSpawner
 var _sell: SellUseCase
 var _interact: InteractUseCase
 
@@ -83,6 +84,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif key_event.keycode == KEY_H:
 		_observation.toggle_debug()
 		_observation.set_debug(_debug_text())
+	elif key_event.keycode == KEY_B:
+		var enabled := _world.toggle_debug_zones()
+		_hud.set_message("布点模式：%s" % ("开" if enabled else "关"))
 	elif key_event.keycode == KEY_ESCAPE:
 		_close_panels()
 
@@ -180,7 +184,8 @@ func _assemble() -> void:
 	_perception = Perception.new(_db)
 	_publisher = CraftEventPublisher.new(Events, _perception)
 	_use_case = CraftUseCase.new(_db, _clock, _inventory, _craft_process, _publisher)
-	_gather = GatherUseCase.new(_db, _gather_process, _inventory, _character, _clock, _rng, _publisher)
+	_wild_spawner = WildSpawner.new(_db, _rng)
+	_gather = GatherUseCase.new(_db, _gather_process, _inventory, _character, _clock, _rng, _wild_spawner, _publisher)
 	_sell = SellUseCase.new(_db, _economy, _inventory, _wallet, _clock, _publisher)
 	_interact = InteractUseCase.new(_publisher, _gather)
 	_time_driver = GameTimeDriver.new(_db, _use_case)
@@ -213,6 +218,7 @@ func _change_scene(scene_id: String) -> void:
 	_hud.set_scene(_scene_name(scene_id))
 	if _gather != null:
 		_world.set_node_availability(_gather.unavailable_ids())
+	_refresh_wild_view(scene_id)
 	_close_panels()
 
 
@@ -460,6 +466,9 @@ func _on_state_changed(scope: String, payload: Dictionary) -> void:
 			_hud.set_money(int(payload.get("gold", 0)))
 		"nodes":
 			_world.set_node_availability(_as_string_array(payload.get("unavailable", [])))
+		"wild":
+			if str(payload.get("scene_id", "")) == _world.current_scene():
+				_world.set_wild_nodes(_as_dictionary_array(payload.get("nodes", [])))
 		"crucible":
 			var was_active := _active
 			_active = bool(payload.get("active", false))
@@ -501,6 +510,16 @@ func _refresh_all() -> void:
 	_hud.set_demand(_demand_text())
 
 
+func _refresh_wild_view(scene_id: String) -> void:
+	if _world == null or _gather == null:
+		return
+	if scene_id == SceneLayout.FOREST:
+		_world.set_wild_nodes(_gather.wild_nodes(scene_id))
+	else:
+		var empty: Array[Dictionary] = []
+		_world.set_wild_nodes(empty)
+
+
 func _refresh_pending() -> void:
 	var view: Dictionary = _active_inputs if _active else _pending_inputs
 	_crucible.refresh(_active, _progress, view, not _pending_inputs.is_empty())
@@ -536,4 +555,13 @@ func _as_string_array(value: Variant) -> Array[String]:
 	if value is Array:
 		for item in value:
 			out.append(str(item))
+	return out
+
+
+func _as_dictionary_array(value: Variant) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if value is Array:
+		for item in value:
+			if item is Dictionary:
+				out.append(item)
 	return out

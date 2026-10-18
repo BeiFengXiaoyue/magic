@@ -34,7 +34,7 @@ func setup() -> void:
 	add_child(_demand_label)
 	add_child(_hint_label)
 	add_child(_message_label)
-	add_child(UiTheme.label("WASD 移动 · E 交互 · T 倍速 · H 调试 · Esc 关闭面板"))
+	add_child(UiTheme.label("WASD 移动 · E 交互 · T 倍速 · B 布点 · H 调试 · Esc 关闭面板"))
 	_hint_label.add_theme_color_override("font_color", UiTheme.COLOR_ACCENT)
 	_message_label.add_theme_color_override("font_color", UiTheme.COLOR_TEXT)
 

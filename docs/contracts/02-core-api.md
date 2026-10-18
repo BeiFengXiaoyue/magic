@@ -1,6 +1,6 @@
 # 02 · 内核与层间接口契约
 
-> **状态：草案 v0.4**（v0.3 补 M2 评审；v0.4 按 M2 实现回填 Economy 实例化、recipe_id、quote、InteractUseCase 等）
+> **状态：草案 v0.5**（v0.4 回填 M2 实现；v0.5 补 forest()/has_node、WildSpawner 与 wild 事件）
 > 依据：`04-技术/架构设计.md` §4/§5 · `04-技术/Demo 制作计划.md` §3/§5 · `02-玩法/反应与条件.md` §4
 >
 > 本契约给出**可直接照着写代码的签名**。核心命题：`core / domain / app 三层删掉 engine 后仍能独立运行`。
@@ -20,6 +20,8 @@ func material(id: String) -> Dictionary                    # 同上
 func recipe(id: String) -> Dictionary                      # 同上
 func item(id: String) -> Dictionary                        # items.json；查不到 → {} 且 push_error
 func node(id: String) -> Dictionary                        # nodes.json；同上
+func has_node(id: String) -> bool                           # 固定节点是否存在（野生 ID 走 WildSpawner）
+func forest() -> Dictionary                                 # forest.json 地图与刷新规则
 func constant(path: String) -> Variant                     # 点分路径："pricing.elasticity"；缺失 → null 且 push_error
 func element_order(id: String) -> int                      # elements.json entries 的下标（tie-break 用）；查不到 → -1
 func item_ids() -> Array[String]                           # items.json 的 ID 列表
@@ -255,6 +257,24 @@ func attempt(node: Dictionary, tool_id: String, rng: DeterministicRng) -> Dictio
 
 > 其余六种（种植 / 熔炼 / 加工 / 装配 / 量产 / 仪式）**留位**：它们与炼制、采集同属本抽象，接口不许写死"炼制"。
 
+**实例三 · 野生资源刷新（M2）**
+
+```gdscript
+class_name WildSpawner
+# 读取 forest.json 的 spawn_zones / wild_spawners；使用 wild 确定性流。
+
+func _init(db: ContentDatabase, rng: DeterministicRng)
+func scene_id() -> String
+func ensure_day(day: int) -> void                 # 同一天不重掷；新的一天清空并重刷
+func nodes(scene_id: String) -> Array[Dictionary] # 当前场景的野生点
+func node(id: String) -> Dictionary               # 运行时 node_wild_* 查找；查不到 → {}
+func consume(id: String) -> void                  # 采集后移除
+```
+
+- 只在新的一天生成，不在每次进入场景时生成。
+- 布点限制在匹配 `habitat` 的 `spawn_zones` 内，并与固定节点、景物、出生点/入口、其他野生点保持 `min_distance`。
+- 野生点不参与固定节点的再生天数；M2 状态只在内存。
+
 ### 2.2 D2 经济（`domain/economy/`）—— M2 简化口径（评审 A2/A3/A10）
 
 ```gdscript
@@ -340,7 +360,8 @@ func gather(node_id: String) -> Dictionary
 #       → D4 adjust_sanity(−sanity_cost)（成功/空手同耗）→ GameClock.advance(minutes)
 #       → 成功后节点进入再生：regrow_at_day = GameClock.today() + regrow_days_by_tier[tier]
 func is_available(node_id: String) -> bool          # 再生期内为 false（场景灰化用）
-func unavailable_ids() -> Array[String]             # 当前再生中的节点（state_changed("nodes") 用）
+func unavailable_ids() -> Array[String]             # 当前再生中的固定节点（state_changed("nodes") 用）
+func wild_nodes(scene_id: String) -> Array[Dictionary] # 当前野生点（WorldView 用；确保当天已生成）
 ```
 
 - 空手：`success = false`，`count = 0`，理智照扣，时间照走。
@@ -439,6 +460,7 @@ signal state_changed(scope: String, payload: Dictionary)       # ③ 状态广�
 | | `"player"` | `{hp: int, sanity: int}` |
 | | `"money"` | `{gold: int, seals: int}` |
 | | `"nodes"` | `{unavailable: [node_id: String]}` |
+| | `"wild"` | `{scene_id: String, nodes: [{id, material_id, tier, scene, position:{x,y}, action, amount}]}` |
 
 > 键名即契约：新增 action / panel / scope 必须先在这里登记。
 
@@ -464,3 +486,5 @@ signal state_changed(scope: String, payload: Dictionary)       # ③ 状态广�
 | 14 | **M2 场景范围：3 场景 + WASD + E 交互 + YSort 占位**；完整伪 3D 后置 | 结构与交互先跑通，表现不阻塞玩法（评审 D3 采纳推荐项）|
 | 15 | **Economy 改为实例类**（`coverage` 保持 static） | P₀ / 材料价 / constants 需要内容库，静态方法无法注入 |
 | 16 | **交互统一走 `InteractUseCase`** | 引擎只发 `interact`，编排决定开面板、采集还是切场景 |
+| 17 | **森林地图与布点数据放 `forest.json`**，道路/地形由地图底图承载，代码不画路 | 地图美术与逻辑解耦；以后按地图特点只改 JSON |
+| 18 | **野生资源新增 `wild` 流，按天刷新**；同一天重复进出不重掷 | 确定性 + 防刷资源 |

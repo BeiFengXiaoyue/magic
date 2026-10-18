@@ -28,3 +28,4 @@
 | 2026-10-17 | 按评审修订 00~04：Inventory / CraftSession / set_tier / 配方匹配 / yield 口径 / 气泡映射 / 事件 payload / 时间入口 / constants 三组 / 波动细则 / 存档种子与精度；标记 02 为 v0.2 |
 | 2026-10-17 | M2 评审落实：ProductInstance / Wallet / CharacterState；items.json · nodes.json 契约；base_price 与乱投兜底；经济口径简化；场景/交互与 payload 扩展；02 升 v0.3 |
 | 2026-10-17 | M2 实现回填：items/nodes 载入与校验、ProductInstance.itm_name、CraftSession.recipe_id、Economy 实例化、GatherUseCase reason/可用性、SellUseCase.quote、InteractUseCase、scene/nodes 事件；02 升 v0.4 |
+| 2026-10-17 | 森林地图与野生资源：forest.json（底图引用 / scenery / spawn_zones / wild_spawners）、`wild` 流、WildSpawner、B 布点模式；固定节点改为 3 个；01/03 升 v0.2、02 升 v0.5 |

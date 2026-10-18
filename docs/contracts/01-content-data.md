@@ -1,6 +1,6 @@
 # 01 · 内容数据契约
 
-> **状态：草案 v0.1**
+> **状态：草案 v0.2**（M2：items / nodes / forest / base_price）
 > 依据：`02-玩法/数值表.md` §2/§5 · `02-玩法/反应与条件.md` §2/§4
 >
 > 内容层是**纯数据**。新增元素 = 加一条数据，不改代码。
@@ -165,14 +165,61 @@
 | `action` | `"gather"` \| `"chop_or_mine"` | ✅ | 决定耗时（10 / 30 游戏分钟） |
 | `amount` | int | ✅ | 单次产出份数 |
 
-M2 首批 6 个点：`node_qinglucao_01/02`（清露草）、`node_taiyi_01/02`（苔衣）、`node_shiyingsha_01`（石英砂）、`node_fengshisha_01`（风蚀砂）。
+M2 固定 3 个点：`node_taiyi_01/02`（苔衣）、`node_shiyingsha_01`（石英砂）。
+清露草与风蚀砂改为野生刷新，规则见 §3.7。
 再生：`regrow_at_day = 采集日 + constants.gathering.regrow_days_by_tier[tier]`；M2 存内存（存档 M4 前补）。
 
 ```json
-{ "id": "node_qinglucao_01", "material_id": "mat_qinglucao", "tier": 1,
-  "scene": "scene_forest", "position": { "x": 320, "y": 480 },
+{ "id": "node_taiyi_01", "material_id": "mat_taiyi", "tier": 1,
+  "scene": "scene_forest", "position": { "x": 980, "y": 360 },
   "action": "gather", "amount": 1 }
 ```
+
+---
+
+## 3.7 `content/forest.json`（M2）
+
+> 单对象地图文件，无 `entries`。**道路/地形来自地图底图**；本文件只描述地图尺寸、底图引用、出生点/入口、定点景物、刷新区域与野生规则。
+
+| 字段 | 类型 | 必填 | 说明 |
+|---|---|---|---|
+| `schema_version` | int | ✅ | 1 |
+| `scene` | string | ✅ | `scene_forest` |
+| `size` | `{x,y}` | ✅ | 世界尺寸（像素） |
+| `walk_margin` | number | ✅ | 可行走边界内缩 |
+| `background` | `{art_id, fallback_color}` | ✅ | `art_id` 指向 04 的 `art_scene_forest`；缺图时用 fallback |
+| `spawn` | `{x,y}` | ✅ | 玩家出生点 |
+| `door` | `{x,y}` | ✅ | 回工坊的门位置 |
+| `scenery` | array | ✅ | 定点景物：树/岩石/灌木 |
+| `spawn_zones` | array | ✅ | 可刷新的地形区域，按 `habitat` 标签匹配 |
+| `wild_spawners` | array | ✅ | 野生资源刷新规则 |
+
+**scenery 条目**：`id`、`kind` ∈ {tree, rock, bush}、`position{x,y}`、`variant`、`scale`、`collision_radius`（0 = 不阻挡）、`art_id`（可为空，留给以后素材）。
+
+**spawn_zones 条目**：
+
+```json
+{ "id": "wet_clearing_west", "habitat": "forest_wetland",
+  "shape": { "type": "rect", "x": 240, "y": 760, "w": 760, "h": 520 } }
+```
+
+或：
+
+```json
+{ "id": "ridge_east", "habitat": "mountain_ridge",
+  "shape": { "type": "polygon", "points": [ {"x":2000,"y":600}, {"x":2900,"y":500}, {"x":3000,"y":1100}, {"x":2300,"y":1300} ] } }
+```
+
+**wild_spawners 条目**：`id`、`material_id`、`tier`、`action`、`amount`、`count`、`habitats`（必须能在 spawn_zones 中找到）、`min_distance`。
+
+规则：
+
+- **没有 `paths`**；代码不绘制道路/网格，地形与道路由 `art_scene_forest` 承载。
+- 野生资源只在匹配 `habitat` 的 `spawn_zones` 里布点。
+- 开局和跨天刷新；同一天重复进出森林不重掷；新的一天清空未采集的野生点并重刷。
+- 运行时 ID：`node_wild_<rule>_<day>_<序号>`；不写入内容 ID 命名空间。
+- 野生节点 M2 只存内存；持久化 M4 前补。
+- 先填占位坐标/区域；地图图片生成后只改本文件与 `nodes.json`。
 
 ---
 
@@ -330,7 +377,8 @@ M2 首批 6 个点：`node_qinglucao_01/02`（清露草）、`node_taiyi_01/02`�
 | 7 | M1 产物只存内存 `Inventory.products`，不进存档 | items.json 属 M2；见 02 契约 §1.9 |
 | 8 | `constants.demo` 承载开局演示数据（世界种子、初始库存） | M1 无采集与商店；M2 起由采集替代，此组可删 |
 | 9 | 配方带 `base_price`（P₀）；乱投产物兜底 `pricing.mixture_base_price` | 乱投没有配方，P₀ 必须有兜底 |
-| 10 | `items.json` 只定义物品大类；每瓶药的实例见 02 `ProductInstance` | 药剂不可堆叠，实例携带自身组成 |
+| 10 | 森林地图/布点放 `forest.json`；道路/地形由地图底图承载，野生资源按 habitat 区域每日刷新（`wild` 流） | 以后按地图特点调整资源点只改 JSON，不改代码 |
+| 11 | `items.json` 只定义物品大类；每瓶药的实例见 02 `ProductInstance` | 药剂不可堆叠，实例携带自身组成 |
 
 ---
 

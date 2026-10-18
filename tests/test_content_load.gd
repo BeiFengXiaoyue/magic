@@ -11,9 +11,19 @@ func run(ctx: TestContext) -> void:
 	ctx.check_eq(db.material_ids().size(), 12, "材料数量")
 	ctx.check_eq(db.recipe_ids().size(), 2, "配方数量")
 	ctx.check_eq(db.item_ids().size(), 2, "物品数量")
-	ctx.check_eq(db.node_ids().size(), 6, "采集点数量")
+	ctx.check_eq(db.node_ids().size(), 3, "固定采集点数量")
 	ctx.check_eq(str(db.item("itm_potion")["name"]), "药剂", "药剂显示名")
-	ctx.check_eq(str(db.node("node_qinglucao_01")["material_id"]), "mat_qinglucao", "采集点材料")
+	ctx.check_eq(str(db.node("node_taiyi_01")["material_id"]), "mat_taiyi", "固定采集点材料")
+	var forest := db.forest()
+	ctx.check(not forest.is_empty(), "森林地图应载入")
+	ctx.check_eq(int(forest["size"]["x"]), 3200, "森林宽度")
+	ctx.check_eq(int(forest["size"]["y"]), 2400, "森林高度")
+	var scenery: Array = forest.get("scenery", [])
+	var zones: Array = forest.get("spawn_zones", [])
+	var spawners: Array = forest.get("wild_spawners", [])
+	ctx.check_eq(scenery.size(), 32, "定点景物数量")
+	ctx.check_eq(zones.size(), 5, "刷新区域数量")
+	ctx.check_eq(spawners.size(), 2, "野生刷新规则数量")
 	ctx.check_eq(db.element_order("el_chiran"), 0, "炽燃表序")
 	ctx.check_eq(db.element_order("el_zhengteng"), 6, "蒸腾表序")
 	ctx.check_eq(db.element_order("el_beilun"), 20, "悖论表序")
@@ -45,6 +55,10 @@ func _test_bad_content(ctx: TestContext) -> void:
 	var nodes := _load_json("res://content/nodes.json")
 	nodes["entries"][0]["material_id"] = "mat_unknown"
 	_write_json(dir.path_join("nodes.json"), nodes)
+	var forest := _load_json("res://content/forest.json")
+	forest["wild_spawners"][0]["material_id"] = "mat_unknown"
+	forest["wild_spawners"][0]["habitats"] = ["no_zone"]
+	_write_json(dir.path_join("forest.json"), forest)
 	_write_json(dir.path_join("constants.json"), _load_json("res://content/constants.json"))
 
 	var db := ContentDatabase.new()
@@ -55,6 +69,7 @@ func _test_bad_content(ctx: TestContext) -> void:
 	ctx.check(_contains(db.errors, "delta_h"), "应报告 delta_h 不一致")
 	ctx.check(_contains(db.errors, "category"), "应报告物品类别无效")
 	ctx.check(_contains(db.errors, "material_id"), "应报告采集点材料不存在")
+	ctx.check(_contains(db.errors, "habitat"), "应报告刷新区域缺失")
 	_clean_dir(dir)
 
 

@@ -10,6 +10,7 @@ const STREAM_NAMES: Array[String] = [
 	"market",
 	"event",
 	"letters",
+	"wild",
 ]
 
 var world_seed: int = 0

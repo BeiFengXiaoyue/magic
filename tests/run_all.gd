@@ -8,6 +8,7 @@ const TESTS: Array[String] = [
 	"res://tests/test_reaction_solver.gd",
 	"res://tests/test_economy.gd",
 	"res://tests/test_craft_use_case.gd",
+	"res://tests/test_wild_spawner.gd",
 	"res://tests/test_gather_sell.gd",
 	"res://tests/test_determinism.gd",
 	"res://tests/test_layer_boundaries.gd",
