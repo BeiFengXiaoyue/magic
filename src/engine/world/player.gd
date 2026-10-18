@@ -12,6 +12,7 @@ const COLOR := Color("#e6dcc8")
 
 var _input_enabled: bool = true
 var _bounds: Rect2 = Rect2(0.0, 0.0, 1280.0, 720.0)
+var _obstacles: Array[Rect2] = []
 var _camera: Camera2D
 
 
@@ -30,6 +31,10 @@ func set_input_enabled(enabled: bool) -> void:
 
 func set_bounds(bounds: Rect2) -> void:
 	_bounds = bounds
+
+
+func set_obstacles(obstacles: Array[Rect2]) -> void:
+	_obstacles = obstacles
 
 
 func set_camera_limits(camera_rect: Rect2) -> void:
@@ -56,9 +61,28 @@ func _process(delta: float) -> void:
 		direction.y += 1.0
 	if direction == Vector2.ZERO:
 		return
-	position += direction.normalized() * SPEED * delta
-	position.x = clampf(position.x, _bounds.position.x + MARGIN, _bounds.end.x - MARGIN)
-	position.y = clampf(position.y, _bounds.position.y + MARGIN, _bounds.end.y - MARGIN)
+	var step := direction.normalized() * SPEED * delta
+	var min_x := _bounds.position.x + MARGIN
+	var max_x := _bounds.end.x - MARGIN
+	var min_y := _bounds.position.y + MARGIN
+	var max_y := _bounds.end.y - MARGIN
+
+	var target_x := clampf(position.x + step.x, min_x, max_x)
+	var candidate := Vector2(target_x, position.y)
+	if not _blocked(candidate):
+		position.x = target_x
+
+	var target_y := clampf(position.y + step.y, min_y, max_y)
+	candidate = Vector2(position.x, target_y)
+	if not _blocked(candidate):
+		position.y = target_y
+
+
+func _blocked(point: Vector2) -> bool:
+	for obstacle in _obstacles:
+		if obstacle.grow(RADIUS).has_point(point):
+			return true
+	return false
 
 
 func _draw() -> void:

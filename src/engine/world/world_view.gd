@@ -49,6 +49,7 @@ func change_scene(scene_id: String) -> void:
 	_interactables.clear()
 	_player.position = SceneLayout.spawn(scene_id)
 	_player.set_bounds(SceneLayout.walkable_rect(scene_id))
+	_player.set_obstacles(SceneLayout.obstacles(scene_id))
 	_player.set_camera_limits(SceneLayout.camera_rect(scene_id))
 	_build_interactables(scene_id)
 	queue_redraw()
@@ -164,7 +165,7 @@ func _draw_room() -> void:
 
 
 func _draw_forest() -> void:
-	var door := Vector2(300.0, 1200.0)
+	var door := SceneLayout.FOREST_DOOR_POS
 	if _db != null:
 		for node_id in _db.node_ids():
 			var node := _db.node(node_id)

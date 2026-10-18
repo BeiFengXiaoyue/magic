@@ -6,6 +6,7 @@ extends Node2D
 const RADIUS := 18.0
 const COLOR_DEFAULT := Color("#d98c3f")
 const COLOR_DOOR := Color("#8a6a4a")
+const COLOR_DOOR_FRAME := Color("#2a1f16")
 const COLOR_NODE := Color("#6f9a5a")
 const COLOR_UNAVAILABLE := Color("#4a4a4a")
 
@@ -36,7 +37,8 @@ func set_available(value: bool) -> void:
 func _draw() -> void:
 	var color := _base_color if _available else COLOR_UNAVAILABLE
 	if kind == "door":
-		draw_rect(Rect2(-16.0, -24.0, 32.0, 48.0), color)
+		draw_rect(Rect2(-18.0, -32.0, 36.0, 64.0), color)
+		draw_rect(Rect2(-18.0, -32.0, 36.0, 64.0), COLOR_DOOR_FRAME, false, 3.0)
 	elif kind == "counter":
 		draw_rect(Rect2(-40.0, -20.0, 80.0, 40.0), color)
 	elif kind == "bed":

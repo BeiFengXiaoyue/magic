@@ -12,6 +12,11 @@ const FOREST_SIZE := Vector2(3200.0, 2400.0)
 const ROOM_MARGIN := 48.0
 const FOREST_MARGIN := 64.0
 
+const WORKSHOP_DOOR_SHOP := Vector2(1232.0, 340.0)
+const WORKSHOP_DOOR_FOREST := Vector2(1232.0, 580.0)
+const SHOP_DOOR_WORKSHOP := Vector2(48.0, 560.0)
+const FOREST_DOOR_POS := Vector2(64.0, 1200.0)
+
 
 static func map_size(scene_id: String) -> Vector2:
 	if scene_id == FOREST:
@@ -64,13 +69,23 @@ static func interactables(scene_id: String) -> Array[Dictionary]:
 	if scene_id == WORKSHOP:
 		out.append(_item("dev_clay_crucible", Vector2(560.0, 360.0), "坩埚", "crucible"))
 		out.append(_item("bed", Vector2(220.0, 560.0), "床", "bed"))
-		out.append(_item("door_shop", Vector2(1120.0, 340.0), "去小店", "door"))
-		out.append(_item("door_forest", Vector2(1120.0, 580.0), "去晨暮森林", "door"))
+		out.append(_item("door_shop", WORKSHOP_DOOR_SHOP, "去小店", "door"))
+		out.append(_item("door_forest", WORKSHOP_DOOR_FOREST, "去晨暮森林", "door"))
 	elif scene_id == SHOP:
 		out.append(_item("shop_counter", Vector2(720.0, 360.0), "柜台", "counter"))
-		out.append(_item("door_workshop", Vector2(180.0, 560.0), "回工坊", "door"))
+		out.append(_item("door_workshop", SHOP_DOOR_WORKSHOP, "回工坊", "door"))
 	elif scene_id == FOREST:
-		out.append(_item("door_workshop", Vector2(300.0, 1200.0), "回工坊", "door"))
+		out.append(_item("door_workshop", FOREST_DOOR_POS, "回工坊", "door"))
+	return out
+
+
+static func obstacles(scene_id: String) -> Array[Rect2]:
+	var out: Array[Rect2] = []
+	if scene_id == WORKSHOP:
+		out.append(Rect2(532.0, 332.0, 56.0, 56.0))
+		out.append(Rect2(188.0, 540.0, 64.0, 40.0))
+	elif scene_id == SHOP:
+		out.append(Rect2(680.0, 340.0, 80.0, 40.0))
 	return out
 
 
