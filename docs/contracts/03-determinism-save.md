@@ -1,6 +1,6 @@
 # 03 · 确定性与存档契约
 
-> **状态：草案 v0.1**
+> **状态：草案 v0.2**（M2：新增 wild 流；存档持久化仍待 M4 前补）
 > 依据：`04-技术/架构设计.md` §4「随机的分区」· `02-玩法/游戏设计.md` §存档 · `04-技术/Demo 制作计划.md` 验收标准
 >
 > 验收标准"**同一种子重跑，结果一致**"由本契约保证。它成立与否，取决于随机是否被严格分区。
@@ -31,6 +31,7 @@ func restore(data: Dictionary) -> void
 | `market` | 市场日报、需求刷新偏向 |
 | `event` | 周期事件判定 |
 | `letters` | 信件相关随机（送达抖动等，M3） |
+| `wild` | 森林野生资源布点（开局/跨天各一次） |
 
 ---
 
@@ -76,7 +77,7 @@ func restore(data: Dictionary) -> void
   "nodes":     { },                                                          // {node_id: {regrow_at_day}}；M2 先存内存，持久化 M4 前补
   "market":    { "reputation": "mid", "rolling_q": [], "day_stock": {} },    // M2 起
   "flags":     { },
-  "rng":       { "craft": "0", "gather": "0", "device": "0", "market": "0", "event": "0", "letters": "0" }
+  "rng":       { "craft": "0", "gather": "0", "device": "0", "market": "0", "event": "0", "letters": "0", "wild": "0" }
 }
 ```
 
@@ -116,3 +117,4 @@ func restore(data: Dictionary) -> void
 | 3 | `crucible` 字段恒 `null`（因炼制中禁存档） | 把"禁止"变成结构上不可能，而非运行时检查 |
 | 4 | 换种子必须改变结果（测试显式断言） | 防止"确定性"被实现成"写死" |
 | 5 | `rng` 的 state 存十进制字符串 | Godot JSON 解析数字为 float，64 位 state 会丢精度 |
+| 6 | 新增 `wild` 流，只用于森林野生布点 | 与 `gather` 的空手判定分离，避免跨模块借用流 |

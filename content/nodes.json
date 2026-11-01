@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "entries": [
+    {
+      "id": "node_taiyi_01",
+      "material_id": "mat_taiyi",
+      "tier": 1,
+      "scene": "scene_forest",
+      "position": { "x": 980, "y": 360 },
+      "action": "gather",
+      "amount": 1
+    },
+    {
+      "id": "node_taiyi_02",
+      "material_id": "mat_taiyi",
+      "tier": 1,
+      "scene": "scene_forest",
+      "position": { "x": 1500, "y": 700 },
+      "action": "gather",
+      "amount": 1
+    },
+    {
+      "id": "node_shiyingsha_01",
+      "material_id": "mat_shiyingsha",
+      "tier": 1,
+      "scene": "scene_forest",
+      "position": { "x": 2300, "y": 1900 },
+      "action": "gather",
+      "amount": 1
+    }
+  ]
+}

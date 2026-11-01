@@ -178,20 +178,23 @@ draft ──试生成 1~2 张、人工核对风格──▶ approved ──批�
 
 | ID | category | 用途 | 里程碑 | 状态 |
 |---|---|---|---|---|
-| `art_scene_workshop` | scene | 炼药工坊（坩埚强光、大暗部） | M2 | todo |
-| `art_scene_shop` | scene | 小店（柜台、信件桌、公告板） | M2 | todo |
-| `art_scene_forest` | scene | 晨暮森林·南坡（清露草、路径、雾） | M2 | todo |
+| `art_scene_workshop` | scene | 炼药工坊（坩埚强光、大暗部） | M2 | draft |
+| `art_scene_shop` | scene | 小店（柜台、信件桌、公告板） | M2 | draft |
+| `art_scene_forest` | scene | 晨暮森林·南坡（清露草、路径、雾） | M2 | draft |
 | `art_scene_attic` | scene | 阁楼（旧箱、尘埃、极暗） | M3 | todo |
 | `art_char_hero_walk` | char | 主角 4 向行走 sheet | M2 | todo |
-| `art_prop_crucible_clay` | prop | 陶土坩埚（M1 核心交互） | M1 | todo |
-| `art_prop_ingredient_rack` | prop | 原料架 | M1 | todo |
-| `art_prop_journal_desk` | prop | 手记台 | M1 | todo |
-| `art_prop_counter` | prop | 小店柜台 | M2 | todo |
+| `art_prop_crucible_clay` | prop | 陶土坩埚（M1 核心交互） | M1 | draft |
+| `art_prop_ingredient_rack` | prop | 原料架 | M1 | draft |
+| `art_prop_journal_desk` | prop | 手记台 | M1 | draft |
+| `art_prop_counter` | prop | 小店柜台 | M2 | draft |
 | `art_prop_hearth` | prop | 壁炉（火烤交互） | M3 | todo |
 | `art_prop_water_basin` | prop | 水盆（蘸水交互） | M3 | todo |
-| `art_prop_bed` | prop | 床（睡眠存档） | M4 | todo |
+| `art_prop_bed` | prop | 床（睡眠存档） | M4 | draft |
 | `art_tile_forest_ground` | tile | 森林地表（草/土/苔） | M2 | todo |
-| `art_prop_qinglucao` | prop | 清露草采集点（雾中） | M2 | todo |
+| `art_prop_qinglucao` | prop | 清露草采集点（雾中） | M2 | draft |
+| `art_prop_taiyi` | prop | 苔衣固定采集点（老树根） | M2 | draft |
+| `art_prop_fengshisha` | prop | 风蚀砂野生采集点（山脊） | M2 | draft |
+| `art_prop_shiyingsha` | prop | 石英砂固定采集点（河床） | M2 | draft |
 | `art_prop_tree_set` | prop | 乔木 ×2 + 灌木 ×2 | M2 | todo |
 | `art_ui_letter_paper` | ui | 信件纸页（羊皮纸、撕裂边） | M3 | todo |
 | `art_ui_journal` | ui | 手记面板（配方 / 记录两页） | M3 | todo |

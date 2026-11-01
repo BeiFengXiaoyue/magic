@@ -1,6 +1,6 @@
 # 00 · 命名与工程规范
 
-> **状态：草案 v0.1**
+> **状态：草案 v0.2**（M2 补入 items/nodes/forest 与场景前缀）
 > 依据：`04-技术/架构设计.md` §2/§3 · `02-玩法/数值表.md` §5.1 · `02-玩法/反应与条件.md` §2
 >
 > 本契约是所有其他契约与代码共用的底座：ID、单位、目录、命名、纪律。
@@ -28,6 +28,9 @@ res://
 │  ├─ elements.json        21 种（6 基础 + 15 复合 T1）
 │  ├─ materials.json       12 种（Demo 首批）
 │  ├─ recipes.json         配方
+│  ├─ items.json           物品大类（M2）
+│  ├─ nodes.json           固定采集点（M2）
+│  ├─ forest.json          森林地图与野生刷新规则（M2）
 │  └─ constants.json       全部常量（数值表 §5 的机器可读形态）
 ├─ src/
 │  ├─ core/                共享内核
@@ -84,6 +87,9 @@ res://
 | `flg_` | 状态旗标 | `flg_attic_open` |
 | `art_` | 美术素材（提示词文件与产出图共用此 ID） | `art_scene_workshop` |
 | `dev_` | 设备 | `dev_clay_crucible` |
+| `scene_` | 场景 | `scene_forest` |
+
+> 引擎交互物 ID（`door_*`、`shop_counter`、`bed`）由 02 契约 §4.1 登记，不属于内容 ID。
 
 > **冲突示例**：变易（元素）与 变异（作用）拼音相同——`el_bianyi` / `eff_bianyi`，前缀隔离，合法。
 
@@ -194,6 +200,7 @@ res://
 ```
 
 `constants.json` 例外：无 `entries`，为分组键值结构（见 01 契约）。
+`forest.json` 例外：单对象地图文件（`schema_version` + 地图字段），无 `entries`（见 01 §3.7）。
 
 ### 7.2 载入校验清单（`ContentDatabase` 启动时强制执行）
 
@@ -207,7 +214,11 @@ res://
 8. `axis` 非空 ⇒ ∈ `vocabulary.axes`，且成分恰为该轴的两端；
 9. 数值域：读数 ∈ [0,1]、`fluctuation` ∈ (0,0.5]、`price` ≥ 0、`element_total` ∈ [0.5,10]；
 10. `recipes.temperature_tier` ∈ 温度档表；
-11. `special_effects` 的 ID ∈ `vocabulary.special_effects`。
+11. `special_effects` 的 ID ∈ `vocabulary.special_effects`；
+12. `recipes.base_price` 为非负整数（M2 定价）；
+13. `items.json`：ID 以 `itm_` 开头、`category` ∈ {potion, residue}、`stackable` 为 bool；
+14. `nodes.json`：`material_id` 存在、`tier` ∈ 1~3、`scene` ∈ M2 三场景、`position` 含 x/y、`action` ∈ {gather, chop_or_mine}、`amount` ≥ 1；
+15. `forest.json`：scene/size/spawn/door、scenery、spawn_zones、wild_spawners 的引用与范围合法（见 01 §3.7）。
 
 任何一条失败 → 启动即报错并列出全部违规项（不静默跳过）。
 

@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "scene": "scene_forest",
+  "size": { "x": 3200, "y": 2400 },
+  "walk_margin": 64,
+  "background": {
+    "art_id": "art_scene_forest",
+    "fallback_color": "#1b2a1d"
+  },
+  "spawn": { "x": 420, "y": 1200 },
+  "door": { "x": 64, "y": 1200 },
+  "scenery": [
+    { "id": "tree_01", "kind": "tree", "position": { "x": 300, "y": 500 }, "variant": 0, "scale": 1.0, "collision_radius": 16, "art_id": "" },
+    { "id": "tree_02", "kind": "tree", "position": { "x": 520, "y": 300 }, "variant": 1, "scale": 0.95, "collision_radius": 16, "art_id": "" },
+    { "id": "tree_03", "kind": "tree", "position": { "x": 760, "y": 620 }, "variant": 0, "scale": 1.05, "collision_radius": 16, "art_id": "" },
+    { "id": "tree_04", "kind": "tree", "position": { "x": 1150, "y": 1080 }, "variant": 2, "scale": 1.0, "collision_radius": 16, "art_id": "" },
+    { "id": "tree_05", "kind": "tree", "position": { "x": 1350, "y": 300 }, "variant": 0, "scale": 1.0, "collision_radius": 16, "art_id": "" },
+    { "id": "tree_06", "kind": "tree", "position": { "x": 1700, "y": 450 }, "variant": 1, "scale": 0.9, "collision_radius": 16, "art_id": "" },
+    { "id": "tree_07", "kind": "tree", "position": { "x": 1900, "y": 900 }, "variant": 0, "scale": 1.1, "collision_radius": 16, "art_id": "" },
+    { "id": "tree_08", "kind": "tree", "position": { "x": 2100, "y": 300 }, "variant": 2, "scale": 1.0, "collision_radius": 16, "art_id": "" },
+    { "id": "tree_09", "kind": "tree", "position": { "x": 2550, "y": 800 }, "variant": 1, "scale": 1.0, "collision_radius": 16, "art_id": "" },
+    { "id": "tree_10", "kind": "tree", "position": { "x": 2900, "y": 400 }, "variant": 0, "scale": 0.95, "collision_radius": 16, "art_id": "" },
+    { "id": "tree_11", "kind": "tree", "position": { "x": 3000, "y": 1500 }, "variant": 2, "scale": 1.05, "collision_radius": 16, "art_id": "" },
+    { "id": "tree_12", "kind": "tree", "position": { "x": 2500, "y": 2200 }, "variant": 0, "scale": 1.0, "collision_radius": 16, "art_id": "" },
+    { "id": "tree_13", "kind": "tree", "position": { "x": 2100, "y": 1500 }, "variant": 1, "scale": 1.0, "collision_radius": 16, "art_id": "" },
+    { "id": "tree_14", "kind": "tree", "position": { "x": 1400, "y": 1200 }, "variant": 2, "scale": 0.9, "collision_radius": 16, "art_id": "" },
+    { "id": "tree_15", "kind": "tree", "position": { "x": 1000, "y": 1400 }, "variant": 0, "scale": 1.0, "collision_radius": 16, "art_id": "" },
+    { "id": "tree_16", "kind": "tree", "position": { "x": 700, "y": 1600 }, "variant": 1, "scale": 1.0, "collision_radius": 16, "art_id": "" },
+    { "id": "tree_17", "kind": "tree", "position": { "x": 400, "y": 1900 }, "variant": 2, "scale": 1.0, "collision_radius": 16, "art_id": "" },
+    { "id": "tree_18", "kind": "tree", "position": { "x": 250, "y": 1500 }, "variant": 0, "scale": 0.9, "collision_radius": 16, "art_id": "" },
+    { "id": "tree_19", "kind": "tree", "position": { "x": 600, "y": 2100 }, "variant": 1, "scale": 1.0, "collision_radius": 16, "art_id": "" },
+    { "id": "tree_20", "kind": "tree", "position": { "x": 1500, "y": 2100 }, "variant": 2, "scale": 1.0, "collision_radius": 16, "art_id": "" },
+    { "id": "tree_21", "kind": "tree", "position": { "x": 1850, "y": 2000 }, "variant": 0, "scale": 1.0, "collision_radius": 16, "art_id": "" },
+    { "id": "tree_22", "kind": "tree", "position": { "x": 1200, "y": 700 }, "variant": 1, "scale": 1.1, "collision_radius": 16, "art_id": "" },
+    { "id": "tree_23", "kind": "tree", "position": { "x": 2750, "y": 1400 }, "variant": 2, "scale": 0.95, "collision_radius": 16, "art_id": "" },
+    { "id": "tree_24", "kind": "tree", "position": { "x": 320, "y": 1000 }, "variant": 0, "scale": 1.0, "collision_radius": 16, "art_id": "" },
+    { "id": "rock_01", "kind": "rock", "position": { "x": 620, "y": 900 }, "variant": 0, "scale": 1.0, "collision_radius": 20, "art_id": "" },
+    { "id": "rock_02", "kind": "rock", "position": { "x": 1420, "y": 1500 }, "variant": 1, "scale": 0.9, "collision_radius": 20, "art_id": "" },
+    { "id": "rock_03", "kind": "rock", "position": { "x": 2000, "y": 1200 }, "variant": 0, "scale": 1.1, "collision_radius": 20, "art_id": "" },
+    { "id": "rock_04", "kind": "rock", "position": { "x": 2600, "y": 1600 }, "variant": 1, "scale": 1.0, "collision_radius": 20, "art_id": "" },
+    { "id": "rock_05", "kind": "rock", "position": { "x": 1000, "y": 500 }, "variant": 0, "scale": 0.8, "collision_radius": 20, "art_id": "" },
+    { "id": "rock_06", "kind": "rock", "position": { "x": 3000, "y": 2000 }, "variant": 1, "scale": 1.2, "collision_radius": 20, "art_id": "" },
+    { "id": "rock_07", "kind": "rock", "position": { "x": 1800, "y": 300 }, "variant": 0, "scale": 0.9, "collision_radius": 20, "art_id": "" },
+    { "id": "rock_08", "kind": "rock", "position": { "x": 2200, "y": 2200 }, "variant": 1, "scale": 1.0, "collision_radius": 20, "art_id": "" }
+  ],
+  "spawn_zones": [
+    {
+      "id": "wet_clearing_west",
+      "habitat": "forest_wetland",
+      "shape": { "type": "rect", "x": 240, "y": 760, "w": 760, "h": 520 }
+    },
+    {
+      "id": "waterside_south",
+      "habitat": "waterside",
+      "shape": { "type": "rect", "x": 1100, "y": 1600, "w": 700, "h": 500 }
+    },
+    {
+      "id": "old_root_grove",
+      "habitat": "old_tree_root",
+      "shape": {
+        "type": "polygon",
+        "points": [
+          { "x": 900, "y": 300 },
+          { "x": 1600, "y": 300 },
+          { "x": 1700, "y": 800 },
+          { "x": 1000, "y": 850 }
+        ]
+      }
+    },
+    {
+      "id": "ridge_east",
+      "habitat": "mountain_ridge",
+      "shape": {
+        "type": "polygon",
+        "points": [
+          { "x": 2000, "y": 600 },
+          { "x": 2900, "y": 500 },
+          { "x": 3000, "y": 1100 },
+          { "x": 2300, "y": 1300 }
+        ]
+      }
+    },
+    {
+      "id": "riverbed_east",
+      "habitat": "riverbed",
+      "shape": { "type": "rect", "x": 2000, "y": 1700, "w": 800, "h": 400 }
+    }
+  ],
+  "wild_spawners": [
+    {
+      "id": "qinglucao",
+      "material_id": "mat_qinglucao",
+      "tier": 1,
+      "action": "gather",
+      "amount": 2,
+      "count": 4,
+      "habitats": ["forest_wetland", "waterside"],
+      "min_distance": 90
+    },
+    {
+      "id": "fengshisha",
+      "material_id": "mat_fengshisha",
+      "tier": 1,
+      "action": "gather",
+      "amount": 1,
+      "count": 2,
+      "habitats": ["mountain_ridge"],
+      "min_distance": 100
+    }
+  ]
+}
