@@ -29,3 +29,4 @@
 | 2026-10-17 | M2 评审落实：ProductInstance / Wallet / CharacterState；items.json · nodes.json 契约；base_price 与乱投兜底；经济口径简化；场景/交互与 payload 扩展；02 升 v0.3 |
 | 2026-10-17 | M2 实现回填：items/nodes 载入与校验、ProductInstance.itm_name、CraftSession.recipe_id、Economy 实例化、GatherUseCase reason/可用性、SellUseCase.quote、InteractUseCase、scene/nodes 事件；02 升 v0.4 |
 | 2026-10-17 | 森林地图与野生资源：forest.json（底图引用 / scenery / spawn_zones / wild_spawners）、`wild` 流、WildSpawner、B 布点模式；固定节点改为 3 个；01/03 升 v0.2、02 升 v0.5 |
+| 2026-10-18 | 美术提示词初稿：3 场景 + 4 资源点 + 5 房间/小店物件（draft）；登记 `art_prop_taiyi` / `art_prop_fengshisha` / `art_prop_shiyingsha` |
