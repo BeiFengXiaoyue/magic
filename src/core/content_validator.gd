@@ -383,6 +383,9 @@ func _validate_materials() -> void:
 		var price: Variant = entry.get("price", null)
 		if not _is_number(price) or float(price) < 0.0 or float(price) != floor(float(price)):
 			error("materials.json: %s 的 price 应为非负整数" % str(id))
+		var art_id: Variant = entry.get("art_id", null)
+		if art_id != null and not art_id is String:
+			error("materials.json: %s 的 art_id 应为字符串" % str(id))
 
 
 func _validate_recipes() -> void:

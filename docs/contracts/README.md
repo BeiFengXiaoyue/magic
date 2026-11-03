@@ -30,3 +30,6 @@
 | 2026-10-17 | M2 实现回填：items/nodes 载入与校验、ProductInstance.itm_name、CraftSession.recipe_id、Economy 实例化、GatherUseCase reason/可用性、SellUseCase.quote、InteractUseCase、scene/nodes 事件；02 升 v0.4 |
 | 2026-10-17 | 森林地图与野生资源：forest.json（底图引用 / scenery / spawn_zones / wild_spawners）、`wild` 流、WildSpawner、B 布点模式；固定节点改为 3 个；01/03 升 v0.2、02 升 v0.5 |
 | 2026-10-18 | 美术提示词初稿：3 场景 + 4 资源点 + 5 房间/小店物件（draft）；登记 `art_prop_taiyi` / `art_prop_fengshisha` / `art_prop_shiyingsha` |
+| 2026-11-03 | 04 升 v0.2：出图统一走**纯文生图**（`无参考生图.json`），`refs/` 与 `generate img.json` 降为备用；新增 §1.2 全局生成参数（steps 8 / cfg 1.0 / res_multistep·simple）、§1.3 五步流程、§5.4 负向与否定式实测；canvas 定为场景 1024×576、其余 768×768；状态机简化 `draft → generated`；`approved` 只保留给全局风格变更 |
+| 2026-11-03 | 04 补实测（同日）：单张 768×768 **18 秒**（服务已热）；物件背景改**肯定句**（`isolated on a completely plain flat solid mid-grey background, empty background, nothing else in the frame`）后石头/地面消失 → 写入 `_style.md` prop 段，9 份物件文件同步；新增 `tools/artgen.py` 批产脚本 |
+| 2026-11-03 | 04 增 **§5.5 硬规则（可机械校验）**：提示词可由外部 AI 撰写，验收闸门改为 `artgen.py lint`（逐字比对 `_style.md`，抓漂移；物件背景子句；正向否定式告警）。决策 2 保留拼好字符串，决策 6 由"前缀人工预验证"改为"lint 比对 + 抽 4 挑 1"；新增 [美术提示词撰写任务书](../art-prompt-brief.md) |

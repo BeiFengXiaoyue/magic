@@ -1,19 +1,19 @@
 ---
 id: art_prop_journal_desk
 category: prop
-purpose: "手记台：旧木桌、空白羊皮手记、墨水瓶、羽毛笔、短蜡烛，透明背景"
-status: draft
-workflow: generate img.json
+purpose: "手记台：旧木桌、空白羊皮手记、墨水瓶、羽毛笔、短蜡烛，纯灰底（出图后抠底）"
+status: generated
+workflow: 无参考生图.json
 ref: null
-canvas: 1024x1024
-seed: null
+canvas: 768x768
+seed: 4201563127234147820
 tier: demo
 ---
 
 ## 正向
 
 ```
-hand-drawn 2D game asset, Don't Starve ink illustration style, Rusty Lake moody atmosphere, thick dark ink outlines in #1A1714 (never pure black), rough hand-drawn linework, visible dry-brush stroke edges, subtle canvas paper texture overlay, heavily desaturated cold muted palette (aged wood #5C4B3A, grey stone #6E6A63, moss green #4A5240, faded blue #3E4A55, bone white #C9BFA8), dark chiaroscuro composition with 60-70% of the frame in shadow, a single warm amber light source (#D98C3F) as the only highlight, scratch-out watercolor highlights instead of white, hand-painted look, no gradients orthographic top-down view at a 45-degree angle, flat 2D object cutout, centered single object, no background scenery a single sturdy wooden desk, an open parchment journal with blank pages, a small ink pot with a quill, one stub candle with a tiny warm flame, a few loose blank sheets, isolated game prop, no ground shadow
+hand-drawn 2D game asset, Don't Starve ink illustration style, Rusty Lake moody atmosphere, thick dark ink outlines in #1A1714 (never pure black), rough hand-drawn linework, visible dry-brush stroke edges, subtle canvas paper texture overlay, heavily desaturated cold muted palette (aged wood #5C4B3A, grey stone #6E6A63, moss green #4A5240, faded blue #3E4A55, bone white #C9BFA8), dark chiaroscuro composition with 60-70% of the frame in shadow, a single warm amber light source (#D98C3F) as the only highlight, scratch-out watercolor highlights instead of white, hand-painted look, no gradients orthographic top-down view at a 45-degree angle, flat 2D object cutout, centered single object, isolated on a completely plain flat solid mid-grey background, empty background, nothing else in the frame, clean sharp cutout edges a single sturdy wooden desk, an open parchment journal with blank pages, a small ink pot with a quill, one stub candle with a tiny warm flame, a few loose blank sheets, isolated game prop
 ```
 
 ## 负向
@@ -24,7 +24,7 @@ pixel art, 8-bit, retro game sprite, 3D render, CGI, octane render, photorealism
 
 ## 备注
 
-- 用于工坊手记台；透明背景，主体居中。
+- 用于工坊手记台；纯灰底，主体居中（出图后抠底）。
 - 游戏内建议后处理到 256~384px；当前代码按图片中心放置。
 - 手记页面保持空白，不要写可读文字；记录内容由 UI 手记面板单独渲染。
 - 只保留一支短蜡烛作为暖光焦点；不要额外光源。

@@ -9,6 +9,8 @@ signal interact_requested(target_id: String)
 signal hint_changed(text: String)
 
 const INTERACT_RADIUS_PX := 80.0
+const RESOURCE_ART_SIZE := 140.0
+const SCENERY_ART_SIZE := 180.0
 const GRID_STEP := 64.0
 const GRID_COLOR := Color(1.0, 1.0, 1.0, 0.04)
 const ROOM_FLOOR_COLOR := Color("#33281e")
@@ -105,7 +107,9 @@ func set_wild_nodes(nodes: Array[Dictionary]) -> void:
 			_position_from(entry.get("position", {})),
 			label,
 			"node",
-			true
+			true,
+			str(material.get("art_id", "")),
+			RESOURCE_ART_SIZE
 		)
 
 
@@ -186,7 +190,11 @@ func _build_interactables(scene_id: String) -> void:
 			"door_workshop",
 			_position_from(_forest_map.get("door", {})),
 			"回工坊",
-			"door"
+			"door",
+			false,
+			"",
+			0.0,
+			_forest_background_texture() == null
 		)
 		for node_id in _db.node_ids():
 			var node := _db.node(node_id)
@@ -197,16 +205,28 @@ func _build_interactables(scene_id: String) -> void:
 				node_id,
 				_position_from(node.get("position", {})),
 				"%s（采集点）" % str(material.get("name", node_id)),
-				"node"
+				"node",
+				false,
+				str(material.get("art_id", "")),
+				RESOURCE_ART_SIZE
 			)
 		return
 	for item in SceneLayout.interactables(scene_id):
 		var item_position: Vector2 = item["position"]
+		var item_kind := str(item["kind"])
+		var art_id := str(item.get("art_id", ""))
+		var visual := true
+		if item_kind == "door" and art_id == "" and _scene_background_texture(scene_id) != null:
+			visual = false
 		_add_interactable(
 			str(item["target_id"]),
 			item_position,
 			str(item["label"]),
-			str(item["kind"])
+			item_kind,
+			false,
+			art_id,
+			float(item.get("art_size", 0.0)),
+			visual
 		)
 
 
@@ -215,10 +235,13 @@ func _add_interactable(
 	position: Vector2,
 	label: String,
 	kind: String,
-	wild: bool = false
+	wild: bool = false,
+	art_id: String = "",
+	art_size: float = 0.0,
+	show_visual: bool = true
 ) -> void:
 	var node := InteractableNode.new()
-	node.setup(target_id, label, kind)
+	node.setup(target_id, label, kind, art_id, art_size, show_visual)
 	node.set_wild(wild)
 	node.position = position
 	add_child(node)
@@ -248,6 +271,10 @@ func _draw() -> void:
 
 
 func _draw_indoor() -> void:
+	var background := _scene_background_texture(_scene_id)
+	if background != null:
+		draw_texture_rect(background, Rect2(Vector2.ZERO, _scene_size), false)
+		return
 	draw_rect(Rect2(Vector2.ZERO, _scene_size), SceneLayout.color(_scene_id))
 	for x in range(0, int(_scene_size.x), int(GRID_STEP)):
 		draw_line(Vector2(float(x), 0.0), Vector2(float(x), _scene_size.y), GRID_COLOR)
@@ -259,19 +286,14 @@ func _draw_indoor() -> void:
 
 
 func _draw_forest_background() -> void:
+	var texture := _forest_background_texture()
+	if texture != null:
+		draw_texture_rect(texture, Rect2(Vector2.ZERO, _scene_size), false)
+		return
 	var background: Variant = _forest_map.get("background", {})
-	var art_id := ""
 	var fallback := "#1b2a1d"
 	if background is Dictionary:
-		art_id = str(background.get("art_id", ""))
 		fallback = str(background.get("fallback_color", fallback))
-	if art_id != "":
-		var texture_path := "res://assets/textures/scene/%s.png" % art_id
-		if ResourceLoader.exists(texture_path):
-			var texture: Texture2D = load(texture_path)
-			if texture != null:
-				draw_texture_rect(texture, Rect2(Vector2.ZERO, _scene_size), false)
-				return
 	draw_rect(Rect2(Vector2.ZERO, _scene_size), Color(fallback))
 
 
@@ -279,6 +301,7 @@ func _draw_scenery() -> void:
 	var scenery: Variant = _forest_map.get("scenery", [])
 	if not scenery is Array:
 		return
+	var background := _forest_background_texture()
 	for entry in scenery:
 		if not entry is Dictionary:
 			continue
@@ -286,6 +309,19 @@ func _draw_scenery() -> void:
 		var kind := str(entry.get("kind", ""))
 		var scale := float(entry.get("scale", 1.0))
 		var variant := int(entry.get("variant", 0))
+		var art_id := str(entry.get("art_id", ""))
+		if background != null and art_id == "":
+			continue
+		if art_id != "":
+			var texture := ArtAssets.texture(art_id)
+			if texture != null:
+				var side := SCENERY_ART_SIZE * scale
+				draw_texture_rect(
+					texture,
+					Rect2(position - Vector2(side / 2.0, side / 2.0), Vector2(side, side)),
+					false
+				)
+				continue
 		if kind == "tree":
 			var color := TREE_COLORS[variant % TREE_COLORS.size()]
 			draw_circle(position, TREE_RADIUS * scale, color)
@@ -358,6 +394,8 @@ func _forest_size() -> Vector2:
 
 func _forest_obstacles() -> Array[Rect2]:
 	var out: Array[Rect2] = []
+	if _forest_background_texture() != null:
+		return out
 	var scenery: Variant = _forest_map.get("scenery", [])
 	if not scenery is Array:
 		return out
@@ -373,6 +411,19 @@ func _forest_obstacles() -> Array[Rect2]:
 			Vector2(radius * 2.0, radius * 2.0)
 		))
 	return out
+
+
+func _forest_background_texture() -> Texture2D:
+	var background: Variant = _forest_map.get("background", {})
+	if not background is Dictionary:
+		return null
+	return ArtAssets.texture(str(background.get("art_id", "")))
+
+
+func _scene_background_texture(scene_id: String) -> Texture2D:
+	if scene_id == SceneLayout.FOREST:
+		return _forest_background_texture()
+	return ArtAssets.texture(SceneLayout.background_art_id(scene_id))
 
 
 func _position_from(value: Variant) -> Vector2:

@@ -7,8 +7,8 @@
     "art_id": "art_scene_forest",
     "fallback_color": "#1b2a1d"
   },
-  "spawn": { "x": 420, "y": 1200 },
-  "door": { "x": 64, "y": 1200 },
+  "spawn": { "x": 760, "y": 720 },
+  "door": { "x": 640, "y": 600 },
   "scenery": [
     { "id": "tree_01", "kind": "tree", "position": { "x": 300, "y": 500 }, "variant": 0, "scale": 1.0, "collision_radius": 16, "art_id": "" },
     { "id": "tree_02", "kind": "tree", "position": { "x": 520, "y": 300 }, "variant": 1, "scale": 0.95, "collision_radius": 16, "art_id": "" },
@@ -47,43 +47,27 @@
     {
       "id": "wet_clearing_west",
       "habitat": "forest_wetland",
-      "shape": { "type": "rect", "x": 240, "y": 760, "w": 760, "h": 520 }
+      "shape": { "type": "rect", "x": 860, "y": 420, "w": 470, "h": 430 }
     },
     {
       "id": "waterside_south",
       "habitat": "waterside",
-      "shape": { "type": "rect", "x": 1100, "y": 1600, "w": 700, "h": 500 }
+      "shape": { "type": "rect", "x": 1340, "y": 1870, "w": 700, "h": 420 }
     },
     {
       "id": "old_root_grove",
       "habitat": "old_tree_root",
-      "shape": {
-        "type": "polygon",
-        "points": [
-          { "x": 900, "y": 300 },
-          { "x": 1600, "y": 300 },
-          { "x": 1700, "y": 800 },
-          { "x": 1000, "y": 850 }
-        ]
-      }
+      "shape": { "type": "rect", "x": 1300, "y": 180, "w": 480, "h": 400 }
     },
     {
       "id": "ridge_east",
       "habitat": "mountain_ridge",
-      "shape": {
-        "type": "polygon",
-        "points": [
-          { "x": 2000, "y": 600 },
-          { "x": 2900, "y": 500 },
-          { "x": 3000, "y": 1100 },
-          { "x": 2300, "y": 1300 }
-        ]
-      }
+      "shape": { "type": "rect", "x": 1840, "y": 430, "w": 800, "h": 720 }
     },
     {
       "id": "riverbed_east",
       "habitat": "riverbed",
-      "shape": { "type": "rect", "x": 2000, "y": 1700, "w": 800, "h": 400 }
+      "shape": { "type": "rect", "x": 530, "y": 1280, "w": 780, "h": 670 }
     }
   ],
   "wild_spawners": [

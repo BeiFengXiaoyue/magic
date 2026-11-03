@@ -14,3 +14,9 @@ Desktop.ini
 .vscode/
 .idea/
 .zcode/
+
+# 出图工具的运行产物
+tools/_preview/
+tools/.artgen_state.json
+__pycache__/
+*.pyc
