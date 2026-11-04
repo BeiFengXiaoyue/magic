@@ -12,6 +12,7 @@ const TESTS: Array[String] = [
 	"res://tests/test_wild_spawner.gd",
 	"res://tests/test_gather_sell.gd",
 	"res://tests/test_determinism.gd",
+	"res://tests/test_scene_layout.gd",
 	"res://tests/test_layer_boundaries.gd",
 	"res://tests/test_no_magic_numbers.gd",
 ]
@@ -21,7 +22,7 @@ func _initialize() -> void:
 	var ctx := TestContext.new()
 	for path in TESTS:
 		var script: GDScript = load(path)
-		if script == null:
+		if script == null or not script.can_instantiate():
 			ctx.check(false, "无法加载测试脚本 %s" % path)
 			continue
 		var instance = script.new()

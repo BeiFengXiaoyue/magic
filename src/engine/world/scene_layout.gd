@@ -3,6 +3,11 @@ extends RefCounted
 
 ## M2 场景几何：室内房间边界、门、家具与固定贴图映射。
 ## 森林几何由 content/forest.json 提供；这里只保留室内。
+##
+## 家具的三件套来自同一份数据，避免贴图 / 碰撞 / 交互三处漂移：
+## - art_size：贴图显示边长（像素，美术图按此缩放）
+## - collider：地面占地（世界坐标），玩家不可穿越
+## - interact_size：以 position 为中心的交互矩形，玩家靠近它的边缘即可按 E
 
 const WORKSHOP := "scene_workshop"
 const SHOP := "scene_shop"
@@ -13,10 +18,26 @@ const FOREST_SIZE := Vector2(3200.0, 2400.0)
 const ROOM_MARGIN := 48.0
 const FOREST_MARGIN := 64.0
 
-const WORKSHOP_DOOR_SHOP := Vector2(375.0, 672.0)
-const WORKSHOP_DOOR_FOREST := Vector2(937.0, 672.0)
-const SHOP_DOOR_WORKSHOP := Vector2(48.0, 560.0)
+## 门都嵌在墙上：工坊底墙 y=600，小店左墙 x=170，对齐烘焙背景里的门洞 / 门框。
+const WORKSHOP_DOOR_SHOP := Vector2(280.0, 600.0)
+const WORKSHOP_DOOR_FOREST := Vector2(651.0, 600.0)
+const SHOP_DOOR_WORKSHOP := Vector2(170.0, 450.0)
 const FOREST_DOOR_POS := Vector2(640.0, 600.0)
+const DOOR_INTERACT_SIZE := Vector2(110.0, 100.0)
+const DOOR_ART_SIZE := 96.0
+
+## 家具按背景图里的实际占位定：坩埚在房间正中，床在左上，柜台在小店中上。
+const CRUCIBLE_ART_SIZE := 96.0
+const BED_ART_SIZE := 170.0
+const COUNTER_ART_SIZE := 230.0
+
+const CRUCIBLE_COLLIDER := Rect2(606.0, 352.0, 68.0, 52.0)
+const BED_COLLIDER := Rect2(225.0, 420.0, 150.0, 88.0)
+const COUNTER_COLLIDER := Rect2(740.0, 315.0, 214.0, 74.0)
+
+const CRUCIBLE_INTERACT := Vector2(112.0, 112.0)
+const BED_INTERACT := Vector2(190.0, 170.0)
+const COUNTER_INTERACT := Vector2(250.0, 180.0)
 
 
 static func background_art_id(scene_id: String) -> String:
@@ -76,25 +97,49 @@ static func color(scene_id: String) -> Color:
 static func interactables(scene_id: String) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	if scene_id == WORKSHOP:
-		out.append(_item("dev_clay_crucible", Vector2(640.0, 360.0), "坩埚", "crucible", "art_prop_crucible_clay", 220.0))
-		out.append(_item("bed", Vector2(220.0, 480.0), "床", "bed", "art_prop_bed", 240.0))
-		out.append(_item("door_shop", WORKSHOP_DOOR_SHOP, "去小店", "door"))
-		out.append(_item("door_forest", WORKSHOP_DOOR_FOREST, "去晨暮森林", "door"))
+		out.append(_item(
+			"dev_clay_crucible", Vector2(640.0, 360.0), "坩埚", "crucible",
+			"art_prop_crucible_clay", CRUCIBLE_ART_SIZE,
+			CRUCIBLE_INTERACT, CRUCIBLE_COLLIDER
+		))
+		out.append(_item(
+			"bed", Vector2(300.0, 440.0), "床", "bed",
+			"art_prop_bed", BED_ART_SIZE,
+			BED_INTERACT, BED_COLLIDER
+		))
+		out.append(_item(
+			"door_shop", WORKSHOP_DOOR_SHOP, "去小店", "door",
+			"art_prop_door_wood", DOOR_ART_SIZE, DOOR_INTERACT_SIZE
+		))
+		out.append(_item(
+			"door_forest", WORKSHOP_DOOR_FOREST, "去晨暮森林", "door",
+			"art_prop_door_wood", DOOR_ART_SIZE, DOOR_INTERACT_SIZE
+		))
 	elif scene_id == SHOP:
-		out.append(_item("shop_counter", Vector2(875.0, 310.0), "柜台", "counter", "art_prop_counter", 320.0))
-		out.append(_item("door_workshop", SHOP_DOOR_WORKSHOP, "回工坊", "door"))
+		out.append(_item(
+			"shop_counter", Vector2(847.0, 315.0), "柜台", "counter",
+			"art_prop_counter", COUNTER_ART_SIZE,
+			COUNTER_INTERACT, COUNTER_COLLIDER
+		))
+		out.append(_item(
+			"door_workshop", SHOP_DOOR_WORKSHOP, "回工坊", "door",
+			"art_prop_door_wood", DOOR_ART_SIZE, DOOR_INTERACT_SIZE
+		))
 	elif scene_id == FOREST:
-		out.append(_item("door_workshop", FOREST_DOOR_POS, "回工坊", "door"))
+		out.append(_item(
+			"door_workshop", FOREST_DOOR_POS, "回工坊", "door",
+			"", 0.0, DOOR_INTERACT_SIZE
+		))
 	return out
 
 
+## 碰撞箱从同一份布局数据推导，不再单独维护一组矩形。
 static func obstacles(scene_id: String) -> Array[Rect2]:
 	var out: Array[Rect2] = []
-	if scene_id == WORKSHOP:
-		out.append(Rect2(600.0, 320.0, 80.0, 80.0))
-		out.append(Rect2(160.0, 440.0, 120.0, 80.0))
-	elif scene_id == SHOP:
-		out.append(Rect2(735.0, 270.0, 280.0, 80.0))
+	for item in interactables(scene_id):
+		var collider: Variant = item.get("collider", Rect2())
+		if collider is Rect2 and (collider as Rect2).size.x > 0.0:
+			out.append(collider)
 	return out
 
 
@@ -104,7 +149,9 @@ static func _item(
 	label: String,
 	kind: String,
 	art_id: String = "",
-	art_size: float = 0.0
+	art_size: float = 0.0,
+	interact_size: Vector2 = Vector2.ZERO,
+	collider: Rect2 = Rect2()
 ) -> Dictionary:
 	return {
 		"target_id": target_id,
@@ -113,4 +160,6 @@ static func _item(
 		"kind": kind,
 		"art_id": art_id,
 		"art_size": art_size,
+		"interact_size": interact_size,
+		"collider": collider,
 	}

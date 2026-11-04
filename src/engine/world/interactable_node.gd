@@ -23,6 +23,7 @@ var _available: bool = true
 var _base_color: Color = COLOR_DEFAULT
 var _texture: Texture2D = null
 var _art_size: float = 0.0
+var _interact_size: Vector2 = Vector2.ZERO
 
 
 func setup(
@@ -31,13 +32,15 @@ func setup(
 	interact_kind: String,
 	art_id: String = "",
 	art_size: float = 0.0,
-	visual: bool = true
+	visual: bool = true,
+	interact_size: Vector2 = Vector2.ZERO
 ) -> void:
 	target_id = id
 	label = display_label
 	kind = interact_kind
 	_art_size = art_size
 	show_visual = visual
+	_interact_size = interact_size
 	_texture = ArtAssets.texture(art_id)
 	if kind == "node":
 		_base_color = COLOR_NODE
@@ -61,6 +64,16 @@ func set_wild(value: bool) -> void:
 func set_show_visual(value: bool) -> void:
 	show_visual = value
 	queue_redraw()
+
+
+## 玩家点到交互矩形的距离；没有配交互矩形时退回圆形半径。
+## 用矩形边缘判定，玩家站在贴图旁边就能按 E，而不是必须踩进贴图。
+func interact_distance(point: Vector2) -> float:
+	if _interact_size == Vector2.ZERO:
+		return position.distance_to(point)
+	var delta := (point - position).abs() - _interact_size * 0.5
+	var outside := Vector2(maxf(delta.x, 0.0), maxf(delta.y, 0.0))
+	return outside.length()
 
 
 func _draw() -> void:

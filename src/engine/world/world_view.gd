@@ -8,7 +8,7 @@ extends Node2D
 signal interact_requested(target_id: String)
 signal hint_changed(text: String)
 
-const INTERACT_RADIUS_PX := 80.0
+const INTERACT_PAD_PX := 44.0
 const RESOURCE_ART_SIZE := 140.0
 const SCENERY_ART_SIZE := 180.0
 const GRID_STEP := 64.0
@@ -109,7 +109,9 @@ func set_wild_nodes(nodes: Array[Dictionary]) -> void:
 			"node",
 			true,
 			str(material.get("art_id", "")),
-			RESOURCE_ART_SIZE
+			RESOURCE_ART_SIZE,
+			true,
+			Vector2(RESOURCE_ART_SIZE, RESOURCE_ART_SIZE)
 		)
 
 
@@ -146,14 +148,14 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _nearest() -> InteractableNode:
 	var best: InteractableNode = null
-	var best_distance := INTERACT_RADIUS_PX
+	var best_distance := INTERACT_PAD_PX
 	for node in _interactables:
-		var distance := node.position.distance_to(_player.position)
+		var distance := node.interact_distance(_player.position)
 		if distance <= best_distance:
 			best_distance = distance
 			best = node
 	for node in _wild_interactables:
-		var distance := node.position.distance_to(_player.position)
+		var distance := node.interact_distance(_player.position)
 		if distance <= best_distance:
 			best_distance = distance
 			best = node
@@ -194,7 +196,8 @@ func _build_interactables(scene_id: String) -> void:
 			false,
 			"",
 			0.0,
-			_forest_background_texture() == null
+			_forest_background_texture() == null,
+			SceneLayout.DOOR_INTERACT_SIZE
 		)
 		for node_id in _db.node_ids():
 			var node := _db.node(node_id)
@@ -208,13 +211,16 @@ func _build_interactables(scene_id: String) -> void:
 				"node",
 				false,
 				str(material.get("art_id", "")),
-				RESOURCE_ART_SIZE
+				RESOURCE_ART_SIZE,
+				true,
+				Vector2(RESOURCE_ART_SIZE, RESOURCE_ART_SIZE)
 			)
 		return
 	for item in SceneLayout.interactables(scene_id):
 		var item_position: Vector2 = item["position"]
 		var item_kind := str(item["kind"])
 		var art_id := str(item.get("art_id", ""))
+		var interact_size: Vector2 = item.get("interact_size", Vector2.ZERO)
 		var visual := true
 		if item_kind == "door" and art_id == "" and _scene_background_texture(scene_id) != null:
 			visual = false
@@ -226,7 +232,8 @@ func _build_interactables(scene_id: String) -> void:
 			false,
 			art_id,
 			float(item.get("art_size", 0.0)),
-			visual
+			visual,
+			interact_size
 		)
 
 
@@ -238,10 +245,11 @@ func _add_interactable(
 	wild: bool = false,
 	art_id: String = "",
 	art_size: float = 0.0,
-	show_visual: bool = true
+	show_visual: bool = true,
+	interact_size: Vector2 = Vector2.ZERO
 ) -> void:
 	var node := InteractableNode.new()
-	node.setup(target_id, label, kind, art_id, art_size, show_visual)
+	node.setup(target_id, label, kind, art_id, art_size, show_visual, interact_size)
 	node.set_wild(wild)
 	node.position = position
 	add_child(node)
