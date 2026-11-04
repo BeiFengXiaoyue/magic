@@ -2,11 +2,11 @@
 id: art_prop_door_wood
 category: prop
 purpose: "室内旧木门：嵌在墙上，供工坊两扇门与小店左墙门共用"
-status: draft
+status: generated
 workflow: 无参考生图.json
 ref: null
 canvas: 768x768
-seed: null
+seed: 1408058770210821856
 tier: demo
 ---
 

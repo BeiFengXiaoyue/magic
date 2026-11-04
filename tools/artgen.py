@@ -36,6 +36,8 @@ PORTABLE = Path(r"C:\Users\BeiFengXiaoYue\Desktop\ComfyUI_windows_portable")
 COMFY_PY = PORTABLE / "python_embeded" / "python.exe"
 COMFY_MAIN = PORTABLE / "ComfyUI" / "main.py"
 WORKFLOW = PORTABLE / "ComfyUI" / "user" / "default" / "workflows" / "无参考生图.json"
+WORKFLOW_I2I = PORTABLE / "ComfyUI" / "user" / "default" / "workflows" / "generate img.json"
+COMFY_INPUT = PORTABLE / "ComfyUI" / "input"
 COMFY_URL = "http://127.0.0.1:8188"
 
 REPO = Path(__file__).resolve().parents[1]
@@ -90,6 +92,26 @@ def parse_block(body: str, heading: str) -> str:
     return m2.group(1).strip()
 
 
+def parse_frames(body: str) -> list[tuple[str, str]]:
+    """解析 `## 帧` 小节：每行 `帧名 | 附加到正向的姿态描述`。"""
+    m = re.search(r"^##\s*帧\s*$(.*?)(?=^##\s|\Z)", body, re.M | re.S)
+    if not m:
+        return []
+    frames = []
+    for line in m.group(1).splitlines():
+        line = line.strip().strip("`").strip()
+        if not line or line.startswith("#") or line.startswith("```"):
+            continue
+        if "|" not in line:
+            continue
+        name, _, txt = line.partition("|")
+        name, txt = name.strip(), txt.strip()
+        # 帧名必须是 `方向_序号`（down_1 / left_2 …），挡掉小节里的说明文字
+        if re.fullmatch(r"[a-z]+_\d+", name) and txt:
+            frames.append((name, txt))
+    return frames
+
+
 def load_prompt(path: Path) -> dict:
     meta, body = parse_frontmatter(path.read_text(encoding="utf-8"))
     art_id = meta.get("id") or path.stem
@@ -113,6 +135,7 @@ def load_prompt(path: Path) -> dict:
         "body": body,
         "positive": parse_block(body, "正向"),
         "negative": parse_block(body, "负向"),
+        "frames": parse_frames(body),
     }
 
 
@@ -149,6 +172,10 @@ def build_graph(workflow: Path) -> dict:
 
         for inp in node.get("inputs") or []:
             name = inp["name"]
+            if name in ("upload",):                  # 前端专用控件，不是真输入
+                if vi < len(vals):
+                    vi += 1
+                continue
             lid = inp.get("link")
             if lid is not None:
                 if lid not in links:
@@ -174,29 +201,82 @@ def build_graph(workflow: Path) -> dict:
 
 def locate(graph: dict) -> dict:
     """按连线关系定位关键节点，而不是靠 id / title。"""
-    ksampler = next((nid for nid, n in graph.items() if n["class_type"] == "KSampler"), None)
-    if not ksampler:
-        raise ValueError("工作流里没有 KSampler")
-    ks = graph[ksampler]["inputs"]
+    sampler = next((nid for nid, n in graph.items()
+                    if n["class_type"] in ("KSampler", "ZImageTurboStyleTransfer")), None)
+    if not sampler:
+        raise ValueError("工作流里没有采样节点（KSampler / ZImageTurboStyleTransfer）")
+    ks = graph[sampler]["inputs"]
+    latent = ks.get("latent_image")
+    image = next((nid for nid, n in graph.items() if n["class_type"] == "LoadImage"), None)
+    scale = next((nid for nid, n in graph.items()
+                  if n["class_type"] == "ImageScaleToTotalPixels"), None)
     return {
-        "ksampler": ksampler,
-        "positive": ks["positive"][0],
-        "negative": ks["negative"][0],
-        "latent": ks["latent_image"][0],
+        "sampler": sampler,
+        "positive": ks["positive" if "positive" in ks else "positive_prompt"][0],
+        "negative": ks["negative" if "negative" in ks else "negative_prompt"][0],
+        "latent": latent[0] if latent else None,
+        "image": image,
+        "scale": scale,
         "save": next(nid for nid, n in graph.items() if n["class_type"] == "SaveImage"),
     }
 
 
-def build_payload(base: dict, ids: dict, item: dict, seed: int) -> dict:
-    g = copy.deepcopy(base)
-    g[ids["positive"]]["inputs"]["text"] = item["positive"]
-    g[ids["negative"]]["inputs"]["text"] = item["negative"]
-    g[ids["latent"]]["inputs"].update(width=item["width"], height=item["height"], batch_size=1)
-    g[ids["ksampler"]]["inputs"].update(
-        seed=seed, steps=STEPS, cfg=CFG, sampler_name=SAMPLER,
-        scheduler=SCHEDULER, denoise=DENOISE,
+def stage_reference(ref: Path) -> str:
+    """把参考图送进 ComfyUI 的 input 目录，返回 LoadImage 要填的文件名。
+
+    走 /upload/image 接口，而不是直接写文件：ComfyUI 可能在别的目录/别的机器上，
+    而且写它的 input 目录需要超出工作区的权限。
+    文件名带内容哈希，避免同名不同图被 ComfyUI 的缓存串味。
+    """
+    import hashlib
+    import uuid
+
+    data = ref.read_bytes()
+    name = f"artgen_{hashlib.sha1(data).hexdigest()[:10]}{ref.suffix or '.png'}"
+    boundary = "----artgen" + uuid.uuid4().hex
+    body = b"".join([
+        f"--{boundary}\r\n".encode(),
+        f'Content-Disposition: form-data; name="image"; filename="{name}"\r\n'.encode(),
+        b"Content-Type: application/octet-stream\r\n\r\n",
+        data,
+        f"\r\n--{boundary}\r\n".encode(),
+        b'Content-Disposition: form-data; name="overwrite"\r\n\r\ntrue\r\n',
+        f"--{boundary}--\r\n".encode(),
+    ])
+    req = urllib.request.Request(
+        COMFY_URL + "/upload/image", data=body,
+        headers={"Content-Type": f"multipart/form-data; boundary={boundary}"},
     )
-    g[ids["save"]]["inputs"]["filename_prefix"] = item["art_id"]
+    with urllib.request.urlopen(req, timeout=60) as r:
+        info = json.loads(r.read().decode("utf-8"))
+    sub = (info.get("subfolder") or "").strip("/")
+    return f"{sub}/{info['name']}" if sub else info["name"]
+
+
+def build_payload(base: dict, ids: dict, item: dict, seed: int,
+                  positive: str | None = None, prefix: str | None = None,
+                  ref: Path | None = None, strength: float | None = None) -> dict:
+    g = copy.deepcopy(base)
+    g[ids["positive"]]["inputs"]["text"] = positive or item["positive"]
+    g[ids["negative"]]["inputs"]["text"] = item["negative"]
+
+    if ids["latent"]:
+        g[ids["latent"]]["inputs"].update(width=item["width"], height=item["height"], batch_size=1)
+
+    if ref is not None and ids["image"]:
+        g[ids["image"]]["inputs"]["image"] = stage_reference(ref)
+        if ids["scale"]:
+            # 默认 0.5 MP 会把 768 的参考图缩小；参考图本身就在目标尺寸附近，设为 1.0
+            g[ids["scale"]]["inputs"]["megapixels"] = 1.0
+
+    ks = g[ids["sampler"]]["inputs"]
+    ks.update(seed=seed, steps=STEPS, cfg=CFG)
+    if "sampler_name" in ks:
+        ks.update(sampler_name=SAMPLER, scheduler=SCHEDULER, denoise=strength if strength is not None else DENOISE)
+    if "style_strength" in ks:
+        ks.update(style_strength=strength if strength is not None else 0.5)
+
+    g[ids["save"]]["inputs"]["filename_prefix"] = prefix or item["art_id"]
     return g
 
 
@@ -306,9 +386,10 @@ def generate_one(payload: dict, timeout: int) -> tuple[bool, list[dict], str]:
     return False, [], f"超时 {timeout}s"
 
 
-def save_images(images: list[dict], item: dict, seed: int) -> list[Path]:
+def save_images(images: list[dict], item: dict, seed: int, frame: str | None = None) -> list[Path]:
     out_dir = RAW / item["category"]
     out_dir.mkdir(parents=True, exist_ok=True)
+    tag = f"__{frame}" if frame else ""
     saved = []
     for i, img in enumerate(images):
         q = urllib.parse.urlencode(
@@ -316,7 +397,7 @@ def save_images(images: list[dict], item: dict, seed: int) -> list[Path]:
         )
         data = http_bytes("/view?" + q)
         suffix = "" if len(images) == 1 else f"_{i + 1}"
-        dst = out_dir / f"{item['art_id']}__s{seed}{suffix}.png"
+        dst = out_dir / f"{item['art_id']}{tag}__s{seed}{suffix}.png"
         dst.write_bytes(data)
         saved.append(dst)
     return saved
@@ -335,8 +416,14 @@ def save_state(state: dict) -> None:
     STATE.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def raw_files(item: dict) -> list[Path]:
+    """一个素材的全部原图：既包括 <id>__s<seed>.png，也包括逐帧的 <id>__<帧>__s<seed>.png。"""
+    d = RAW / item["category"]
+    return sorted(set(d.glob(f"{item['art_id']}__s*.png")) | set(d.glob(f"{item['art_id']}__*__s*.png")))
+
+
 def has_raw(item: dict) -> bool:
-    return any((RAW / item["category"]).glob(f"{item['art_id']}__s*.png"))
+    return bool(raw_files(item))
 
 
 # ── 规范检查（lint）────────────────────────────────────────────────────────
@@ -444,7 +531,7 @@ def cmd_list(_: argparse.Namespace) -> int:
     print("-" * 78)
     todo = 0
     for it in items:
-        n = len(list((RAW / it["category"]).glob(f"{it['art_id']}__s*.png")))
+        n = len(raw_files(it))
         if n == 0:
             todo += 1
         print(f"{it['art_id']:30} {it['category']:6} {it['canvas']:10} {it['status']:10} {n}")
@@ -501,15 +588,21 @@ def cmd_run(args: argparse.Namespace) -> int:
             print("ComfyUI 未运行。先启动它，或加 --launch 让脚本自己拉起。")
             return 2
 
-    base = build_graph(WORKFLOW)
+    wf = WORKFLOW_I2I if getattr(args, "workflow", "t2i") == "i2i" else WORKFLOW
+    ref = Path(args.ref) if getattr(args, "ref", None) else None
+    if wf is WORKFLOW_I2I and (ref is None or not ref.exists()):
+        print("i2i 模式需要 --ref 指定一张已存在的参考图")
+        return 2
+    base = build_graph(wf)
     ids = locate(base)
+    print(f"工作流：{wf.name}" + (f"；参考图：{ref.name}" if ref else ""))
     items = select_items(args)
     if not items:
         print("没有需要生成的素材（都已有原图，或 --only 没匹配上）")
         return 0
 
-    total = len(items) * args.count
-    print(f"开始：{len(items)} 个素材 × {args.count} 张 = {total} 张，串行执行")
+    total = sum((len(it["frames"]) if it["frames"] else args.count) for it in items)
+    print(f"开始：{len(items)} 个素材，共 {total} 张，串行执行")
     state = load_state()
     ok = fail = skip = 0
     t_all = time.time()
@@ -521,9 +614,38 @@ def cmd_run(args: argparse.Namespace) -> int:
             fail += args.count
             continue
 
+        # 有「帧」小节的素材：一帧一个提示词、**所有帧共用一个 seed**（尽量保持是同一个角色）
+        if it["frames"]:
+            seed = args.seed if args.seed is not None else random.getrandbits(62)
+            todo = [(n, p) for n, p in it["frames"] if not getattr(args, "frame", None) or n == args.frame]
+            for fi, (fname, pose) in enumerate(todo, 1):
+                payload = build_payload(
+                    base, ids, it, seed,
+                    positive=f"{it['positive']}, {pose}",
+                    prefix=f"{it['art_id']}_{fname}",
+                    ref=ref, strength=getattr(args, "strength", None),
+                )
+                print(f"[{idx}/{len(items)} {fi}/{len(todo)}] {it['art_id']}:{fname} …",
+                      end="", flush=True)
+                t0 = time.time()
+                good, images, err = generate_one(payload, args.timeout)
+                dt = time.time() - t0
+                if good:
+                    paths = save_images(images, it, seed, frame=fname)
+                    ok += 1
+                    print(f" 完成 {dt:.0f}s → {paths[0].name}")
+                else:
+                    fail += 1
+                    print(f" 失败（{dt:.0f}s）{err}")
+                    state.setdefault("failed", {})[f"{it['art_id']}:{fname}"] = err
+                save_state(state)
+            state.setdefault("done", {})[it["art_id"]] = [seed]
+            continue
+
         for c in range(args.count):
-            seed = random.getrandbits(62)
-            payload = build_payload(base, ids, it, seed)
+            seed = args.seed if args.seed is not None else random.getrandbits(62)
+            payload = build_payload(base, ids, it, seed,
+                                    ref=ref, strength=getattr(args, "strength", None))
             tag = f"[{idx}/{len(items)} #{c + 1}] {it['art_id']} seed={seed}"
             print(f"{tag} …", end="", flush=True)
             t0 = time.time()
@@ -579,6 +701,57 @@ def cmd_pick(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_sheet(args: argparse.Namespace) -> int:
+    """把逐帧生成的原图拼成一张 sheet（按 `## 帧` 的顺序，4 列）。"""
+    from PIL import Image
+
+    items = {it["art_id"]: it for it in discover()}
+    it = items.get(args.art_id)
+    if not it:
+        print(f"找不到素材 {args.art_id}")
+        return 2
+    if not it["frames"]:
+        print(f"{args.art_id} 没有「## 帧」小节，不需要拼图")
+        return 2
+
+    cells, missing = [], []
+    seed = None
+    for fname, _ in it["frames"]:
+        cands = sorted((RAW / it["category"]).glob(f"{it['art_id']}__{fname}__s*.png"),
+                       key=lambda p: p.stat().st_mtime, reverse=True)
+        if not cands:
+            missing.append(fname)
+            continue
+        cells.append((fname, cands[0]))
+        seed = seed or cands[0].stem.split("__s")[-1]
+
+    if missing:
+        print(f"缺少帧：{', '.join(missing)}，先跑 run")
+        return 2
+
+    cols = args.cols
+    rows = (len(cells) + cols - 1) // cols
+    cell = args.cell
+    sheet = Image.new("RGBA", (cols * cell, rows * cell), (0, 0, 0, 0))
+    for i, (_, p) in enumerate(cells):
+        im = Image.open(p).convert("RGBA").resize((cell, cell), Image.LANCZOS)
+        sheet.paste(im, ((i % cols) * cell, (i // cols) * cell), im)
+
+    dst = TEXTURES / it["category"] / f"{it['art_id']}.png"
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    sheet.save(dst)
+
+    if seed:
+        text = it["path"].read_text(encoding="utf-8")
+        text = re.sub(r"(?m)^seed:.*$", f"seed: {seed}", text)
+        text = re.sub(r"(?m)^status:.*$", "status: generated", text)
+        it["path"].write_text(text, encoding="utf-8")
+
+    print(f"已拼 {len(cells)} 帧 → {dst.relative_to(REPO)}  ({cols}×{rows} 格，每格 {cell}px)")
+    print(f"共用 seed={seed}；frontmatter 已更新")
+    return 0
+
+
 def cmd_launch(_: argparse.Namespace) -> int:
     return 0 if launch_server() else 1
 
@@ -610,12 +783,24 @@ def main() -> int:
     r.add_argument("--timeout", type=int, default=900, help="单张超时秒数")
     r.add_argument("--force", action="store_true", help="已有原图也重跑")
     r.add_argument("--launch", action="store_true", help="未运行则自行启动 ComfyUI")
+    r.add_argument("--seed", type=int, help="固定 seed（有「## 帧」的素材：所有帧共用这一个）")
+    r.add_argument("--workflow", choices=["t2i", "i2i"], default="t2i",
+                   help="t2i=无参考生图（默认）；i2i=参考图 + 提示词（需 --ref）")
+    r.add_argument("--ref", help="i2i 的参考图路径")
+    r.add_argument("--strength", type=float, help="i2i 的重绘强度（denoise / style_strength，默认 0.5）")
+    r.add_argument("--frame", help="只重跑某一帧（仅对带「## 帧」的素材有效）")
     r.set_defaults(func=cmd_run)
 
     k = sub.add_parser("pick", help="挑定一张：复制到 textures 并回填 seed/status")
     k.add_argument("art_id")
     k.add_argument("seed", type=int)
     k.set_defaults(func=cmd_pick)
+
+    s = sub.add_parser("sheet", help="把逐帧原图拼成 sheet（用于 char）")
+    s.add_argument("art_id")
+    s.add_argument("--cols", type=int, default=4)
+    s.add_argument("--cell", type=int, default=192, help="每格边长，默认 192（=768/4）")
+    s.set_defaults(func=cmd_sheet)
 
     args = ap.parse_args()
     COMFY_URL = args.url.rstrip("/")

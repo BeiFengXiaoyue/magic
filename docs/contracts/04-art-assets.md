@@ -17,7 +17,7 @@
 | **出图工作流（唯一）** | `无参考生图.json` —— **纯文生图**：正/负提示词 + 尺寸 → 出图，**不使用参考图** |
 | 模型栈 | UNET `z_image_turbo_fp8_e4m3fn` · VAE `z-image-ae` · CLIP `qwen_3_4b_fp8_mixed`（qwen_image）|
 | 出视频工作流 | `generate video.json` —— 图生视频（循环动画用，`fx` / 动画类素材）|
-| 备用（当前不用） | `generate img.json` —— 图生图 / 风格迁移，需要参考图；将来若要做风格统一再启用 |
+| **参考生图（i2i，已验证）** | `generate img.json` —— 参考图 + 提示词 → 重绘。**不改姿势**（0.45 / 0.75 实测都只是重绘同一张），用途仅限：统一风格、修细节、放大定稿图。逐帧动作仍走文生图 |
 
 ### 1.1 提示词节点映射（`无参考生图.json`）
 
@@ -243,12 +243,12 @@ draft ──抽 4 张、人眼挑 1 张、回填 seed──▶ generated
 | `art_scene_shop` | scene | 小店（柜台、信件桌、公告板） | M2 | generated |
 | `art_scene_forest` | scene | 晨暮森林·南坡（清露草、路径、雾） | M2 | generated |
 | `art_scene_attic` | scene | 阁楼（旧箱、尘埃、极暗） | M3 | todo |
-| `art_char_hero_walk` | char | 主角 4 向行走 sheet | M2 | draft |
+| `art_char_hero_walk` | char | 主角**左右两向**行走 sheet（上下移动复用左右，纯垂直时沿用上一朝向） | M2 | generated |
 | `art_prop_crucible_clay` | prop | 陶土坩埚（M1 核心交互） | M1 | generated |
 | `art_prop_ingredient_rack` | prop | 原料架 | M1 | generated |
 | `art_prop_journal_desk` | prop | 手记台 | M1 | generated |
 | `art_prop_counter` | prop | 小店柜台 | M2 | generated |
-| `art_prop_door_wood` | prop | 室内木门（嵌墙、通用） | M2 | draft |
+| `art_prop_door_wood` | prop | 室内木门（嵌墙、通用） | M2 | generated |
 | `art_prop_hearth` | prop | 壁炉（火烤交互） | M3 | todo |
 | `art_prop_water_basin` | prop | 水盆（蘸水交互） | M3 | todo |
 | `art_prop_bed` | prop | 床（睡眠存档） | M4 | generated |

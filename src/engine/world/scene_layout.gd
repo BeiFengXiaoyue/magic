@@ -76,7 +76,7 @@ static func camera_rect(scene_id: String) -> Rect2:
 
 static func spawn(scene_id: String) -> Vector2:
 	if scene_id == WORKSHOP:
-		return Vector2(640.0, 520.0)
+		return Vector2(520.0, 540.0)
 	if scene_id == SHOP:
 		return Vector2(320.0, 520.0)
 	if scene_id == FOREST:

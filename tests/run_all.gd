@@ -13,6 +13,7 @@ const TESTS: Array[String] = [
 	"res://tests/test_gather_sell.gd",
 	"res://tests/test_determinism.gd",
 	"res://tests/test_scene_layout.gd",
+	"res://tests/test_player_facing.gd",
 	"res://tests/test_layer_boundaries.gd",
 	"res://tests/test_no_magic_numbers.gd",
 ]

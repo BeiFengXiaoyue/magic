@@ -1,11 +1,13 @@
-"""抠底工具：把 prop 贴图的纯灰背景与投影去掉，写成 RGBA。
+"""抠底工具：把 prop / char 贴图的纯灰背景与投影去掉，写成 RGBA。
 
 用法（ComfyUI 自带 Python 或任何带 Pillow 的 Python）：
     python tools/cutout.py --only art_prop_qinglucao --out-dir tools/_preview/cut
     python tools/cutout.py                 # 处理 assets/textures/prop/ 全部，覆盖原图
+    python tools/cutout.py --category char --no-trim   # 角色表：只去背景，保留格位
 
 背景色从四边采样；从边界做 4 邻接洪泛，把背景色与中灰投影设为透明。
 黑色描边属于“很暗、低饱和”像素，不进入洪泛，避免吃掉主体轮廓。
+物件默认裁到主体并居中；角色表用 --no-trim 保留原画布，切帧才对得上。
 """
 
 from __future__ import annotations
@@ -18,7 +20,7 @@ from statistics import median
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
-PROP_DIR = ROOT / "assets" / "textures" / "prop"
+TEXTURE_ROOT = ROOT / "assets" / "textures"
 
 
 def _sample_bg(px, width: int, height: int) -> tuple[int, int, int]:
@@ -50,7 +52,10 @@ def _removable(r: int, g: int, b: int, bg: tuple[int, int, int]) -> bool:
     return lum < bg_lum - 4.0 and lum > 24.0 and saturation < 36 and distance <= 105.0
 
 
-def cutout(image: Image.Image) -> tuple[Image.Image, tuple[int, int, int], float]:
+def cutout(
+    image: Image.Image,
+    trim: bool = True,
+) -> tuple[Image.Image, tuple[int, int, int], float]:
     rgba = image.convert("RGBA")
     width, height = rgba.size
     px = rgba.load()
@@ -96,19 +101,20 @@ def cutout(image: Image.Image) -> tuple[Image.Image, tuple[int, int, int], float
 
     removed = sum(mask) / float(width * height)
 
-    bbox = rgba.getbbox()
-    if bbox:
-        left, top, right, bottom = bbox
-        content_w = right - left
-        content_h = bottom - top
-        pad = max(8, int(max(content_w, content_h) * 0.06))
-        side = max(content_w, content_h) + pad * 2
-        canvas = Image.new("RGBA", (side, side), (0, 0, 0, 0))
-        crop = rgba.crop(bbox)
-        offset_x = (side - content_w) // 2
-        offset_y = (side - content_h) // 2
-        canvas.paste(crop, (offset_x, offset_y), crop)
-        rgba = canvas
+    if trim:
+        bbox = rgba.getbbox()
+        if bbox:
+            left, top, right, bottom = bbox
+            content_w = right - left
+            content_h = bottom - top
+            pad = max(8, int(max(content_w, content_h) * 0.06))
+            side = max(content_w, content_h) + pad * 2
+            canvas = Image.new("RGBA", (side, side), (0, 0, 0, 0))
+            crop = rgba.crop(bbox)
+            offset_x = (side - content_w) // 2
+            offset_y = (side - content_h) // 2
+            canvas.paste(crop, (offset_x, offset_y), crop)
+            rgba = canvas
 
     return rgba, bg, removed
 
@@ -116,22 +122,25 @@ def cutout(image: Image.Image) -> tuple[Image.Image, tuple[int, int, int], float
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--only", default="", help="只处理一个 art_id")
-    parser.add_argument("--out-dir", default="", help="输出目录；默认覆盖 textures/prop")
+    parser.add_argument("--category", default="prop", choices=["prop", "char"], help="textures 下的子目录")
+    parser.add_argument("--no-trim", action="store_true", help="保留原画布与格位（角色表用）")
+    parser.add_argument("--out-dir", default="", help="输出目录；默认覆盖 textures/<category>")
     args = parser.parse_args()
 
-    out_dir = Path(args.out_dir) if args.out_dir else PROP_DIR
+    source_dir = TEXTURE_ROOT / args.category
+    out_dir = Path(args.out_dir) if args.out_dir else source_dir
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    files = sorted(PROP_DIR.glob("*.png"))
+    files = sorted(source_dir.glob("*.png"))
     if args.only:
         files = [p for p in files if p.stem == args.only]
     if not files:
-        print("没有找到要处理的 prop 贴图")
+        print(f"没有找到要处理的 {args.category} 贴图")
         return 1
 
     for source in files:
         with Image.open(source) as image:
-            result, bg, removed = cutout(image)
+            result, bg, removed = cutout(image, trim=not args.no_trim)
         target = out_dir / source.name
         result.save(target)
         print(f"{source.name}: bg={bg} removed={removed:.1%} -> {target}")

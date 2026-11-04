@@ -31,11 +31,21 @@ $py = "C:\Users\BeiFengXiaoYue\Desktop\ComfyUI_windows_portable\python_embeded\p
 
 # 挑定一张：复制到 textures/ 并回填 seed、status
 & $py tools\artgen.py pick art_prop_crucible_clay 1376459228465061869
+
+# 逐帧素材（有「## 帧」小节）：固定 seed 跑全部帧，再拼 sheet
+& $py tools\artgen.py run --only art_char_hero_walk --force --seed 20261104
+& $py tools\artgen.py sheet art_char_hero_walk
+
+# 参考生图（i2i）：拿一张定稿当参考重绘，--strength 是重绘强度
+& $py tools\artgen.py run --only art_prop_crucible_clay --workflow i2i `
+    --ref assets\raw\prop\art_prop_crucible_clay__s2264258430219746954.png --strength 0.45
 ```
 
-## 抠底（物件后处理）
+> i2i 只是“重绘同一张”，**改不了姿势**——实测 0.45 和 0.75 都保持原构图。逐帧动作要用 t2i + 固定 seed。
 
-纯文生图不出 alpha；`pick` 出来的成品仍是灰底。用 `cutout.py` 把灰底与投影去掉、裁到主体并写成 RGBA：
+## 抠底（物件 / 角色后处理）
+
+纯文生图不出 alpha；`pick` / `sheet` 出来的成品仍是灰底。用 `cutout.py` 把灰底与投影去掉并写成 RGBA：
 
 ```powershell
 # 只试一个，输出到预览目录
@@ -43,9 +53,13 @@ $py = "C:\Users\BeiFengXiaoYue\Desktop\ComfyUI_windows_portable\python_embeded\p
 
 # 全部 prop 成品，覆盖 assets/textures/prop/
 & $py tools\cutout.py
+
+# 角色表：只去背景，保留 192px 格位（不要裁边居中）
+& $py tools\cutout.py --category char --no-trim
 ```
 
 - 背景色从四边采样，从边界洪泛；黑色描边不会被吃掉。
+- 物件默认裁到主体并居中；角色表必须用 `--no-trim`，否则切帧位置会乱。
 - 原图仍在 `assets/raw/`，可随时重抠。
 - 场景图不需要抠底；只有 `prop` 需要。
 
