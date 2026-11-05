@@ -67,7 +67,7 @@ assets/
 │  └─ <category>/<art_id>.md   一个素材一个文件
 ├─ refs/                       ○ 参考图（**暂停使用**；恢复图生图时才启用）
 │  └─ <art_id>.(png|jpg|webp)
-├─ raw/                        ★ 生成原图（AI 直接输出，保真留档）
+├─ raw/                        ○ 生成原图（AI 直接输出，本地留档，不入库）
 │  └─ <category>/<art_id>__s<seed>.png
 └─ textures/                   ★ 游戏成品（Godot 唯一导入的素材目录）
    └─ <category>/<art_id>.png
@@ -77,13 +77,13 @@ assets/
 |---|---|---|---|---|
 | `prompts/` | 提示词 + 风格前缀 | ✗（`.gdignore`）| ✅ | `<art_id>.md` |
 | `refs/` | 参考图（**当前流程不产出**） | ✗（`.gdignore`）| ✅ | `<art_id>.<ext>` |
-| `raw/` | AI 原始输出（未处理） | ✗（`.gdignore`）| ✅ | `<art_id>.png`；多版 `<art_id>__s<seed>.png` |
+| `raw/` | AI 原始输出（未处理） | ✗（`.gdignore`）| ❌（本地保留）| `<art_id>.png`；多版 `<art_id>__s<seed>.png` |
 | `textures/` | 抠底 / 缩放后的成品 | ✅ | ✅ | `<art_id>.png` |
 
 **四条硬规则**：
 
 1. **提示词只存在 `prompts/`**，文件名 = `art_id`，与 `raw/`、`textures/` 的 `<art_id>` 一一对应。
-2. **`raw/` 是可复现的源**：一律保存 AI 原始输出（原尺寸、原背景），**永不直接进游戏**。
+2. **`raw/` 是可复现的源**：一律保存 AI 原始输出（原尺寸、原背景），**永不直接进游戏**；候选图体积大，**只在本地保留，不进 git**（`.gitignore` 已忽略 `assets/raw/`）。
 3. **`textures/` 是游戏唯一引用的素材目录**：后处理（抠底、裁边、缩放至美术 §14.1 规格）后的成品放这里；切帧 / 图集在 Godot 内配置，不额外产生文件。
 4. **引用方式**：代码与数据一律用 `art_id`，路径由 `res://assets/textures/<category>/<art_id>.png` 推导，**不得**写死文件名。
 

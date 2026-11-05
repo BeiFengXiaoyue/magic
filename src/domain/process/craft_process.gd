@@ -1,5 +1,5 @@
 class_name CraftProcess
-extends ProcessEngine
+extends RefCounted
 
 ## 炼制过程（契约 02 §2.1）。
 ## 材料 → 元素池（波动经 craft 流）→ 温度（经 device 流）→ 求解 → 会话。

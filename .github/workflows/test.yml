@@ -1,0 +1,25 @@
+name: headless-tests
+
+on:
+  push:
+    branches: [main, "feature/**"]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Godot 4.7.2
+        run: |
+          curl -sSL -o godot.zip \
+            https://github.com/godotengine/godot/releases/download/4.7.2-stable/Godot_v4.7.2-stable_linux.x86_64.zip
+          unzip -q godot.zip
+          chmod +x Godot_v4.7.2-stable_linux.x86_64
+
+      - name: Warm up resource import
+        run: ./Godot_v4.7.2-stable_linux.x86_64 --headless --path . --quit
+
+      - name: Run headless tests
+        run: ./Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script res://tests/run_all.gd

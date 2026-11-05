@@ -3,7 +3,7 @@ extends RefCounted
 ## 室内布局一致性：贴图显示尺寸 / 地面碰撞箱 / 交互矩形三者不能漂移。
 ## 几何数据在 src/engine/world/scene_layout.gd，这里只验收结果。
 
-const MAX_PROP_ART_SIZE := 260.0
+const MAX_PROP_ART_SIZE := 260.0  # no-magic-ok: 物件贴图显示尺寸上限（美术预算），非策划数值
 
 
 func run(ctx: TestContext) -> void:

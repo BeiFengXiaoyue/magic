@@ -198,10 +198,13 @@ func snapshot() -> Dictionary          # {gold: int, seals: int}
 
 ## 2. 领域层（`src/domain/`）—— 互不 import，共享只走 core
 
-### 2.1 D1 过程（`domain/process/`）——「一切生产活动的抽象」
+### 2.1 D1 过程（`domain/process/`）
+
+> **生产活动抽象（`ProcessEngine`）推迟到出现第三种活动时再提取。** M1 只有炼制、M2 只有采集，二者没有共享接口；空基类只增加间接层。
 
 ```gdscript
-class_name ProcessEngine          # 抽象：消耗 → 判定 → 产出
+class_name CraftProcess           # 炼制过程：消耗 → 判定 → 产出
+class_name GatherProcess          # 采集过程：消耗 → 判定 → 产出
 ```
 
 **实例一 · 炼制（M1）**
