@@ -221,10 +221,7 @@ func _build_interactables(scene_id: String) -> void:
 		var item_kind := str(item["kind"])
 		var art_id := str(item.get("art_id", ""))
 		var interact_size: Vector2 = item.get("interact_size", Vector2.ZERO)
-		var visual := true
-		if _scene_background_texture(scene_id) != null:
-			if item_kind == "door" or item_kind == "counter":
-				visual = false
+		var visual := bool(item.get("visual", true))
 		_add_interactable(
 			str(item["target_id"]),
 			item_position,

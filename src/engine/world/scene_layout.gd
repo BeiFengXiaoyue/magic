@@ -24,15 +24,15 @@ const HERO_CLEARANCE := 120.0
 const WORKSHOP_FLOOR := Rect2(200.0, 245.0, 870.0, 311.0)
 const SHOP_FLOOR := Rect2(190.0, 220.0, 910.0, 392.0)
 
-## 门都嵌在墙上，各占一面：工坊上墙双开木门去小店，底墙门洞去森林；
+## 门都嵌在墙上，各占一面：工坊上墙右侧门洞去小店，底墙门洞去森林；
 ## 小店左墙门回工坊。坐标对齐烘焙背景里的门洞 / 门板。
-const WORKSHOP_DOOR_SHOP := Vector2(640.0, 150.0)
+const WORKSHOP_DOOR_SHOP := Vector2(900.0, 180.0)
 const WORKSHOP_DOOR_FOREST := Vector2(651.0, 600.0)
 const SHOP_DOOR_WORKSHOP := Vector2(170.0, 450.0)
 const FOREST_DOOR_POS := Vector2(640.0, 600.0)
 const DOOR_INTERACT_SIZE := Vector2(110.0, 100.0)
-const WALL_DOOR_INTERACT_SIZE := Vector2(120.0, 200.0)
-const DOOR_ART_SIZE := 96.0
+const WALL_DOOR_INTERACT_SIZE := Vector2(120.0, 240.0)
+const DOOR_ART_SIZE := 130.0
 
 ## 家具按背景图里的实际占位定：坩埚在房间正中，床在左上，柜台在小店中上。
 const CRUCIBLE_ART_SIZE := 96.0
@@ -115,21 +115,21 @@ static func interactables(scene_id: String) -> Array[Dictionary]:
 		))
 		out.append(_item(
 			"door_shop", WORKSHOP_DOOR_SHOP, "去小店", "door",
-			"", 0.0, WALL_DOOR_INTERACT_SIZE
+			"", 0.0, WALL_DOOR_INTERACT_SIZE, Rect2(), false
 		))
 		out.append(_item(
 			"door_forest", WORKSHOP_DOOR_FOREST, "去晨暮森林", "door",
-			"", 0.0, DOOR_INTERACT_SIZE
+			"art_prop_door_wood", DOOR_ART_SIZE, DOOR_INTERACT_SIZE
 		))
 	elif scene_id == SHOP:
 		out.append(_item(
 			"shop_counter", Vector2(847.0, 315.0), "柜台", "counter",
 			"art_prop_counter", COUNTER_ART_SIZE,
-			COUNTER_INTERACT, COUNTER_COLLIDER
+			COUNTER_INTERACT, COUNTER_COLLIDER, false
 		))
 		out.append(_item(
 			"door_workshop", SHOP_DOOR_WORKSHOP, "回工坊", "door",
-			"", 0.0, DOOR_INTERACT_SIZE
+			"", 0.0, DOOR_INTERACT_SIZE, Rect2(), false
 		))
 	elif scene_id == FOREST:
 		out.append(_item(
@@ -157,7 +157,8 @@ static func _item(
 	art_id: String = "",
 	art_size: float = 0.0,
 	interact_size: Vector2 = Vector2.ZERO,
-	collider: Rect2 = Rect2()
+	collider: Rect2 = Rect2(),
+	visual: bool = true
 ) -> Dictionary:
 	return {
 		"target_id": target_id,
@@ -168,4 +169,5 @@ static func _item(
 		"art_size": art_size,
 		"interact_size": interact_size,
 		"collider": collider,
+		"visual": visual,
 	}
