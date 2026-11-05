@@ -194,10 +194,10 @@ func _build_interactables(scene_id: String) -> void:
 			"回工坊",
 			"door",
 			false,
-			"",
-			0.0,
-			_forest_background_texture() == null,
-			SceneLayout.DOOR_INTERACT_SIZE
+			"art_prop_door_wood",
+			240.0,
+			true,
+			Vector2(240.0, 240.0)
 		)
 		for node_id in _db.node_ids():
 			var node := _db.node(node_id)
@@ -222,8 +222,9 @@ func _build_interactables(scene_id: String) -> void:
 		var art_id := str(item.get("art_id", ""))
 		var interact_size: Vector2 = item.get("interact_size", Vector2.ZERO)
 		var visual := true
-		if item_kind == "door" and art_id == "" and _scene_background_texture(scene_id) != null:
-			visual = false
+		if _scene_background_texture(scene_id) != null:
+			if item_kind == "door" or item_kind == "bed" or item_kind == "counter":
+				visual = false
 		_add_interactable(
 			str(item["target_id"]),
 			item_position,
