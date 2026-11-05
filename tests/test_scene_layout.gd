@@ -72,13 +72,26 @@ func _check_furniture(ctx: TestContext) -> void:
 
 
 func _check_doors(ctx: TestContext) -> void:
-	for item in SceneLayout.interactables(SceneLayout.WORKSHOP):
-		if str(item.get("kind", "")) != "door":
-			continue
-		ctx.check(
-			(item["collider"] as Rect2).size.x <= 0.0,
-			"%s 的门不应有碰撞箱" % str(item.get("target_id", ""))
-		)
+	for scene_id in [SceneLayout.WORKSHOP, SceneLayout.SHOP]:
+		for item in SceneLayout.interactables(scene_id):
+			if str(item.get("kind", "")) != "door":
+				continue
+			var target := str(item.get("target_id", ""))
+			var position: Vector2 = item["position"]
+			var interact: Vector2 = item["interact_size"]
+			var door_rect := Rect2(position - interact * 0.5, interact)
+			ctx.check(
+				(item["collider"] as Rect2).size.x <= 0.0,
+				"%s 的门不应有碰撞箱" % target
+			)
+			for other in SceneLayout.interactables(scene_id):
+				var collider: Rect2 = other["collider"]
+				if collider.size.x <= 0.0:
+					continue
+				ctx.check(
+					not door_rect.intersects(collider),
+					"%s 的门被 %s 挡住" % [target, str(other.get("target_id", ""))]
+				)
 	var workshop_area := SceneLayout.walkable_rect(SceneLayout.WORKSHOP).grow(-Player.MARGIN)
 	var workshop_doors := [SceneLayout.WORKSHOP_DOOR_SHOP, SceneLayout.WORKSHOP_DOOR_FOREST]
 	for door_position in workshop_doors:

@@ -24,8 +24,9 @@ const HERO_CLEARANCE := 120.0
 const WORKSHOP_FLOOR := Rect2(194.0, 245.0, 918.0, 311.0)
 const SHOP_FLOOR := Rect2(181.0, 220.0, 938.0, 392.0)
 
-## 门都嵌在墙上：工坊底墙 y=600，小店左墙 x=170，对齐烘焙背景里的门洞 / 门框。
-const WORKSHOP_DOOR_SHOP := Vector2(280.0, 600.0)
+## 门都嵌在墙上，各占一面：工坊底墙门洞去森林，右墙门/梯位去小店；
+## 小店左墙门回工坊。坐标对齐烘焙背景里的门洞 / 门框。
+const WORKSHOP_DOOR_SHOP := Vector2(1115.0, 420.0)
 const WORKSHOP_DOOR_FOREST := Vector2(651.0, 600.0)
 const SHOP_DOOR_WORKSHOP := Vector2(170.0, 450.0)
 const FOREST_DOOR_POS := Vector2(640.0, 600.0)
