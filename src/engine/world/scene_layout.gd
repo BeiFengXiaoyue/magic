@@ -36,16 +36,16 @@ const DOOR_ART_SIZE := 130.0
 
 ## 家具按背景图里的实际占位定：坩埚在房间正中，床在左上，柜台在小店中上。
 const CRUCIBLE_ART_SIZE := 96.0
-const BED_ART_SIZE := 170.0
+const BED_ART_SIZE := 150.0
 const COUNTER_ART_SIZE := 230.0
 
 ## 碰撞箱覆盖贴图的整个视觉占地：45° 俯视下也不让角色站进桌面 / 锅口 / 床面。
 const CRUCIBLE_COLLIDER := Rect2(592.0, 312.0, 96.0, 96.0)
-const BED_COLLIDER := Rect2(365.0, 424.0, 170.0, 152.0)
+const BED_COLLIDER := Rect2(411.0, 363.0, 78.0, 134.0)
 const COUNTER_COLLIDER := Rect2(732.0, 235.0, 230.0, 160.0)
 
 const CRUCIBLE_INTERACT := Vector2(112.0, 112.0)
-const BED_INTERACT := Vector2(190.0, 170.0)
+const BED_INTERACT := Vector2(110.0, 170.0)
 const COUNTER_INTERACT := Vector2(250.0, 180.0)
 
 
@@ -109,7 +109,7 @@ static func interactables(scene_id: String) -> Array[Dictionary]:
 			CRUCIBLE_INTERACT, CRUCIBLE_COLLIDER
 		))
 		out.append(_item(
-			"bed", Vector2(450.0, 500.0), "床", "bed",
+			"bed", Vector2(450.0, 430.0), "床", "bed",
 			"art_prop_bed", BED_ART_SIZE,
 			BED_INTERACT, BED_COLLIDER
 		))

@@ -82,15 +82,19 @@ func _draw() -> void:
 	var color := _base_color if _available else COLOR_UNAVAILABLE
 	if _texture != null:
 		var side := _art_size if _art_size > 0.0 else float(_texture.get_width())
+		var texture_size := Vector2(float(_texture.get_width()), float(_texture.get_height()))
+		var display := Vector2(side, side)
+		if texture_size.x > 0.0 and texture_size.y > 0.0:
+			display = texture_size * (side / maxf(texture_size.x, texture_size.y))
 		draw_texture_rect(
 			_texture,
-			Rect2(-side / 2.0, -side / 2.0, side, side),
+			Rect2(-display * 0.5, display),
 			false
 		)
 		if wild:
 			draw_arc(
 				Vector2.ZERO,
-				side / 2.0 + 2.0,
+				maxf(display.x, display.y) * 0.5 + 2.0,
 				0.0,
 				TAU,
 				24,
