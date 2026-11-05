@@ -73,6 +73,7 @@ func _check_furniture(ctx: TestContext) -> void:
 
 func _check_doors(ctx: TestContext) -> void:
 	for scene_id in [SceneLayout.WORKSHOP, SceneLayout.SHOP]:
+		var area := SceneLayout.walkable_rect(scene_id).grow(-Player.MARGIN)
 		for item in SceneLayout.interactables(scene_id):
 			if str(item.get("kind", "")) != "door":
 				continue
@@ -84,6 +85,10 @@ func _check_doors(ctx: TestContext) -> void:
 				(item["collider"] as Rect2).size.x <= 0.0,
 				"%s 的门不应有碰撞箱" % target
 			)
+			ctx.check(
+				_rect_gap(door_rect, area) <= WorldView.INTERACT_PAD_PX,
+				"%s 从地面走不到" % target
+			)
 			for other in SceneLayout.interactables(scene_id):
 				var collider: Rect2 = other["collider"]
 				if collider.size.x <= 0.0:
@@ -92,26 +97,6 @@ func _check_doors(ctx: TestContext) -> void:
 					not door_rect.intersects(collider),
 					"%s 的门被 %s 挡住" % [target, str(other.get("target_id", ""))]
 				)
-	var workshop_area := SceneLayout.walkable_rect(SceneLayout.WORKSHOP).grow(-Player.MARGIN)
-	var workshop_doors := [SceneLayout.WORKSHOP_DOOR_SHOP, SceneLayout.WORKSHOP_DOOR_FOREST]
-	for door_position in workshop_doors:
-		var door_rect := Rect2(
-			door_position - SceneLayout.DOOR_INTERACT_SIZE * 0.5,
-			SceneLayout.DOOR_INTERACT_SIZE
-		)
-		ctx.check(
-			_rect_gap(door_rect, workshop_area) <= WorldView.INTERACT_PAD_PX,
-			"工坊门 %s 从地面走不到" % str(door_position)
-		)
-	var shop_area := SceneLayout.walkable_rect(SceneLayout.SHOP).grow(-Player.MARGIN)
-	var shop_door := Rect2(
-		SceneLayout.SHOP_DOOR_WORKSHOP - SceneLayout.DOOR_INTERACT_SIZE * 0.5,
-		SceneLayout.DOOR_INTERACT_SIZE
-	)
-	ctx.check(
-		_rect_gap(shop_door, shop_area) <= WorldView.INTERACT_PAD_PX,
-		"小店左墙的门从地面走不到"
-	)
 
 
 func _rect_gap(a: Rect2, b: Rect2) -> float:

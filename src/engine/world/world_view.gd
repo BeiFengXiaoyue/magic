@@ -194,9 +194,9 @@ func _build_interactables(scene_id: String) -> void:
 			"回工坊",
 			"door",
 			false,
-			"art_prop_door_wood",
-			240.0,
-			true,
+			"",
+			0.0,
+			false,
 			Vector2(240.0, 240.0)
 		)
 		for node_id in _db.node_ids():
@@ -223,7 +223,7 @@ func _build_interactables(scene_id: String) -> void:
 		var interact_size: Vector2 = item.get("interact_size", Vector2.ZERO)
 		var visual := true
 		if _scene_background_texture(scene_id) != null:
-			if item_kind == "door" or item_kind == "bed" or item_kind == "counter":
+			if item_kind == "door" or item_kind == "counter":
 				visual = false
 		_add_interactable(
 			str(item["target_id"]),
