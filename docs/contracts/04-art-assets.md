@@ -249,6 +249,7 @@ draft ──抽 4 张、人眼挑 1 张、回填 seed──▶ generated
 | `art_prop_journal_desk` | prop | 手记台 | M1 | generated |
 | `art_prop_counter` | prop | 小店柜台 | M2 | generated |
 | `art_prop_door_wood` | prop | 室内木门（嵌墙、通用） | M2 | generated |
+| `art_prop_cave_entrance` | prop | 森林洞穴入口（回工坊） | M2 | generated |
 | `art_prop_hearth` | prop | 壁炉（火烤交互） | M3 | todo |
 | `art_prop_water_basin` | prop | 水盆（蘸水交互） | M3 | todo |
 | `art_prop_bed` | prop | 床（睡眠存档） | M4 | generated |

@@ -194,9 +194,9 @@ func _build_interactables(scene_id: String) -> void:
 			"回工坊",
 			"door",
 			false,
-			"",
-			0.0,
-			false,
+			"art_prop_cave_entrance",
+			240.0,
+			true,
 			Vector2(240.0, 240.0)
 		)
 		for node_id in _db.node_ids():
