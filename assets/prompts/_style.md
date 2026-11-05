@@ -21,8 +21,8 @@ pixel art, 8-bit, retro game sprite, 3D render, CGI, octane render, photorealism
 
 | category | 正向追加 |
 |---|---|
-| `scene` | `orthographic top-down view at a 45-degree angle, flat 2D rendering, no perspective distortion, no vanishing point, walkable game scene layout` |
-| `prop` | `orthographic top-down view at a 45-degree angle, flat 2D object cutout, centered single object, no background scenery` |
+| `scene` | `directly overhead top-down view looking straight down, flat 2D floor plan filling the entire frame edge to edge, walkable game scene layout` |
+| `prop` | `orthographic top-down view at a 45-degree angle, flat 2D object cutout, centered single object, isolated on a completely plain flat solid mid-grey background, empty background, nothing else in the frame, clean sharp cutout edges` |
 | `char` | `1:2.5 head-to-body ratio, big head and thin limbs, blank expressionless face with two dot eyes and a single line mouth, full body game sprite` |
 | `ui` | `flat 2D game UI element, aged torn parchment, hand-drawn ink line borders, no perspective` |
 | `mob` | `orthographic top-down view at a 45-degree angle, full body creature game sprite` |

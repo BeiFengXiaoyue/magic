@@ -6,7 +6,9 @@ extends RefCounted
 func run(ctx: TestContext) -> void:
 	var db := ContentDatabase.new()
 	db.load_all()
-	ctx.check(db.errors.is_empty(), "求解器测试需要干净的内容数据")
+	if not db.errors.is_empty():
+		ctx.check(false, "内容数据不干净：" + str(db.errors))
+		return
 	var solver := ReactionSolver.new(db)
 
 	var warm := solver.solve(

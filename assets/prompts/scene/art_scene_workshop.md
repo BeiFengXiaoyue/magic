@@ -2,18 +2,18 @@
 id: art_scene_workshop
 category: scene
 purpose: "炼药工坊室内背景：石地板、木架、冷壁炉；中央留空暖光池，坩埚作为独立物件叠加"
-status: draft
-workflow: generate img.json
+status: generated
+workflow: 无参考生图.json
 ref: null
 canvas: 1024x576
-seed: null
+seed: 614451139700586731
 tier: demo
 ---
 
 ## 正向
 
 ```
-hand-drawn 2D game asset, Don't Starve ink illustration style, Rusty Lake moody atmosphere, thick dark ink outlines in #1A1714 (never pure black), rough hand-drawn linework, visible dry-brush stroke edges, subtle canvas paper texture overlay, heavily desaturated cold muted palette (aged wood #5C4B3A, grey stone #6E6A63, moss green #4A5240, faded blue #3E4A55, bone white #C9BFA8), dark chiaroscuro composition with 60-70% of the frame in shadow, a single warm amber light source (#D98C3F) as the only highlight, scratch-out watercolor highlights instead of white, hand-painted look, no gradients orthographic top-down view at a 45-degree angle, flat 2D rendering, no perspective distortion, no vanishing point, walkable game scene layout a single small walkable alchemy workshop interior, square stone floor, heavy dark wooden shelves along the left and back walls, a cold empty stone hearth on the left wall, a sturdy wooden worktable against the back wall, an empty central floor area with one pool of warm amber light where a clay crucible will be placed separately, a doorway opening on the right wall, deep shadow in the corners, no characters, no crucible, no bed, no loose props in the center, quiet cramped atmosphere
+hand-drawn 2D game asset, Don't Starve ink illustration style, Rusty Lake moody atmosphere, thick dark ink outlines in #1A1714 (never pure black), rough hand-drawn linework, visible dry-brush stroke edges, subtle canvas paper texture overlay, heavily desaturated cold muted palette (aged wood #5C4B3A, grey stone #6E6A63, moss green #4A5240, faded blue #3E4A55, bone white #C9BFA8), dark chiaroscuro composition with 60-70% of the frame in shadow, a single warm amber light source (#D98C3F) as the only highlight, scratch-out watercolor highlights instead of white, hand-painted look, no gradients directly overhead top-down view looking straight down, flat 2D floor plan filling the entire frame edge to edge, walkable game scene layout a single small walkable alchemy workshop interior, square stone floor, heavy dark wooden shelves along the left and back walls, a cold empty stone hearth on the left wall, a sturdy wooden worktable against the back wall, an empty central floor area with one pool of warm amber light where a clay crucible will be placed separately, a doorway opening on the right wall, deep shadow in the corners, an unoccupied room, the center kept as open floor with one pool of light, furniture held against the walls, a full-frame interior view filling the entire canvas edge to edge, walls and floor running past the frame borders, the room extending beyond the edges of the image, quiet cramped atmosphere
 ```
 
 ## 负向

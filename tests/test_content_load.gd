@@ -6,7 +6,9 @@ extends RefCounted
 func run(ctx: TestContext) -> void:
 	var db := ContentDatabase.new()
 	db.load_all()
-	ctx.check(db.errors.is_empty(), "内容载入应无错误：%s" % str(db.errors))
+	if not db.errors.is_empty():
+		ctx.check(false, "内容数据不干净：" + str(db.errors))
+		return
 	ctx.check_eq(db.element_ids().size(), 21, "元素数量")
 	ctx.check_eq(db.material_ids().size(), 12, "材料数量")
 	ctx.check_eq(db.recipe_ids().size(), 2, "配方数量")

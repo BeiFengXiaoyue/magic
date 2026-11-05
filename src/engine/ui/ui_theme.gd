@@ -9,6 +9,8 @@ const COLOR_TEXT := Color("#e6dcc8")
 const COLOR_ACCENT := Color("#d98c3f")
 const COLOR_BG := Color("#14110f")
 const COLOR_PANEL := Color("#1f1a16")
+const COLOR_OUTLINE := Color("#0d0b09")
+const OUTLINE_SIZE := 4
 
 
 static func create() -> Theme:
@@ -34,6 +36,8 @@ static func title(text: String) -> Label:
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	label.add_theme_font_size_override("font_size", TITLE_SIZE)
 	label.add_theme_color_override("font_color", COLOR_ACCENT)
+	label.add_theme_color_override("font_outline_color", COLOR_OUTLINE)
+	label.add_theme_constant_override("outline_size", OUTLINE_SIZE)
 	return label
 
 
@@ -42,4 +46,6 @@ static func label(text: String) -> Label:
 	label.text = text
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.add_theme_color_override("font_outline_color", COLOR_OUTLINE)
+	label.add_theme_constant_override("outline_size", OUTLINE_SIZE)
 	return label

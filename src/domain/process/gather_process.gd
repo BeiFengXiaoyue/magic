@@ -1,5 +1,5 @@
 class_name GatherProcess
-extends ProcessEngine
+extends RefCounted
 
 ## 采集过程（契约 02 §2.1 实例二）。
 ## 空手率 = 基础率(tier) × 工具修正 × (1 + 天气项)；成功/空手理智同耗。

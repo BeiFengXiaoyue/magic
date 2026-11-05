@@ -12,7 +12,7 @@
 
 | 项 | 决定 |
 |---|---|
-| 引擎 | **Godot 4.7.2**（`C:\Users\BeiFengXiaoYue\Desktop\IDE\Godot_v4.7.2-stable_win64.exe`）|
+| 引擎 | **Godot 4.7.2** |
 | 语言 | **GDScript**（静态类型；契约签名即 GDScript 签名）|
 | 数据 | **JSON**，全部走 `content/`，数据驱动 |
 
@@ -26,7 +26,7 @@ res://
 │  ├─ domain/   领域层（过程 / 经济 / 叙事 / 角色）——互不 import
 │  ├─ app/      编排层（用例：串起领域）
 │  └─ engine/   引擎层（场景 / 面板 / 输入 / 音频）——唯一可含 Node 类型
-├─ tests/       headless 测试（内核/领域/编排删掉引擎层仍可运行）
+├─ tests/       headless 测试（core/domain/app 不依赖引擎运行时；engine 层的纯数据与纯函数也纳入）
 └─ docs/
    └─ contracts/   ★ 规范契约（当前阶段的工作重心）
 ```
@@ -34,19 +34,36 @@ res://
 依赖只许向下：`content → core → domain → app → engine`；
 唯一例外是**感知通道**（引擎可特许读内核的 `Perception` 输出）。
 
-## 当前阶段
+## 当前进度
 
-**规范契约设计**（M1「能炼一炉」开工前）。契约清单见 [docs/contracts/README.md](docs/contracts/README.md)。
+| 里程碑 | 内容 | 状态 |
+|---|---|---|
+| M1 能炼一炉 | 投料 → 选火候 → 气泡演化 → 取出产物 | ✅ 完成 |
+| M2 闭环 | 采集 → 炼制 → 卖出；需求不匹配则卖不掉 | ✅ 完成 |
+| M3 信件与引导 | L01~L05 驱动、信件交互、手记 | ⬜ 未开始 |
+| M4 完整节奏 | 时间、生存、战斗、存档 | ⬜ 未开始 |
+| M5 可玩性测试 | 找人试玩，验证三个设计假设 | ⬜ 未开始 |
 
-契约状态：`草案` → `评审` → `已定`。**已定的契约是实现的硬依据**——实现者不必再问字段与签名。
+- 自动化检查：**389 项 headless 检查**（含分层依赖、魔法数、内容 schema、场景布局等静态约束）
+- 契约：00~04 共 5 份，见 [docs/contracts/README.md](docs/contracts/README.md)，当前 v0.5
+- 详细进度与验证记录：[docs/工作进展.md](docs/工作进展.md)
+- 已知未实现：存档与读档（契约 03 已定义）、UI 层自动化测试
 
 ## 本地运行
 
 ```bash
+# 需 Godot 4.7.2，且 godot 可执行文件已在 PATH 中
 # 打开编辑器
-"C:\Users\BeiFengXiaoYue\Desktop\IDE\Godot_v4.7.2-stable_win64.exe" --path .
+godot --path .
+
 # 校验工程（无窗口）
-"C:\Users\BeiFengXiaoYue\Desktop\IDE\Godot_v4.7.2-stable_win64.exe" --headless --path . --quit
+godot --headless --path . --quit
+```
+
+Windows 用户若未配置 PATH，可以使用完整路径：
+
+```powershell
+& "C:\path\to\Godot_v4.7.2-stable_win64_console.exe" --headless --path . --quit
 ```
 
 ## 工作纪律（摘要）
@@ -56,3 +73,7 @@ res://
 - 同一世界种子重跑，结果必须一致（验收项）。
 - **禁止魔法数**：策划可调的数值只许来自 `content/constants.json`；引擎表现参数必须写成具名常量。
 - 细则见 `docs/contracts/00-conventions.md`。
+
+## License
+
+MIT © 2026 BeiFengXiaoyue

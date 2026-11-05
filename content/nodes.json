@@ -6,7 +6,7 @@
       "material_id": "mat_taiyi",
       "tier": 1,
       "scene": "scene_forest",
-      "position": { "x": 980, "y": 360 },
+      "position": { "x": 1000, "y": 600 },
       "action": "gather",
       "amount": 1
     },
@@ -15,7 +15,7 @@
       "material_id": "mat_taiyi",
       "tier": 1,
       "scene": "scene_forest",
-      "position": { "x": 1500, "y": 700 },
+      "position": { "x": 1500, "y": 400 },
       "action": "gather",
       "amount": 1
     },
@@ -24,7 +24,7 @@
       "material_id": "mat_shiyingsha",
       "tier": 1,
       "scene": "scene_forest",
-      "position": { "x": 2300, "y": 1900 },
+      "position": { "x": 900, "y": 1600 },
       "action": "gather",
       "amount": 1
     }

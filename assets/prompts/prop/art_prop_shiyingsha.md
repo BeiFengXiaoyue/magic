@@ -1,19 +1,19 @@
 ---
 id: art_prop_shiyingsha
 category: prop
-purpose: "石英砂固定采集点：嵌在灰岩中的乳白石英晶簇，透明背景"
-status: draft
-workflow: generate img.json
+purpose: "石英砂固定采集点：嵌在灰岩中的乳白石英晶簇，纯灰底（出图后抠底）"
+status: generated
+workflow: 无参考生图.json
 ref: null
-canvas: 1024x1024
-seed: null
+canvas: 768x768
+seed: 4148444718041264180
 tier: demo
 ---
 
 ## 正向
 
 ```
-hand-drawn 2D game asset, Don't Starve ink illustration style, Rusty Lake moody atmosphere, thick dark ink outlines in #1A1714 (never pure black), rough hand-drawn linework, visible dry-brush stroke edges, subtle canvas paper texture overlay, heavily desaturated cold muted palette (aged wood #5C4B3A, grey stone #6E6A63, moss green #4A5240, faded blue #3E4A55, bone white #C9BFA8), dark chiaroscuro composition with 60-70% of the frame in shadow, a single warm amber light source (#D98C3F) as the only highlight, scratch-out watercolor highlights instead of white, hand-painted look, no gradients orthographic top-down view at a 45-degree angle, flat 2D object cutout, centered single object, no background scenery a single cluster of milky white quartz crystals embedded in a small grey rock, sharp translucent facets, a faint cold glint on the tallest crystal, dark mineral seams, isolated game prop, no ground shadow
+hand-drawn 2D game asset, Don't Starve ink illustration style, Rusty Lake moody atmosphere, thick dark ink outlines in #1A1714 (never pure black), rough hand-drawn linework, visible dry-brush stroke edges, subtle canvas paper texture overlay, heavily desaturated cold muted palette (aged wood #5C4B3A, grey stone #6E6A63, moss green #4A5240, faded blue #3E4A55, bone white #C9BFA8), dark chiaroscuro composition with 60-70% of the frame in shadow, a single warm amber light source (#D98C3F) as the only highlight, scratch-out watercolor highlights instead of white, hand-painted look, no gradients orthographic top-down view at a 45-degree angle, flat 2D object cutout, centered single object, isolated on a completely plain flat solid mid-grey background, empty background, nothing else in the frame, clean sharp cutout edges a single cluster of milky white quartz crystals embedded in a small grey rock, sharp translucent facets, a faint cold glint on the tallest crystal, dark mineral seams, isolated game prop
 ```
 
 ## 负向
@@ -24,7 +24,7 @@ pixel art, 8-bit, retro game sprite, 3D render, CGI, octane render, photorealism
 
 ## 备注
 
-- 用于固定石英砂节点；透明背景，主体居中。
+- 用于固定石英砂节点；纯灰底，主体居中（出图后抠底）。
 - 游戏内建议后处理到 128~256px；当前代码按图片中心放置。
 - 固定点位于河床/岩地，采集后 3 天再生。
 - 晶体是乳白/骨白，不要画成高饱和紫水晶；冷光只用一点点。

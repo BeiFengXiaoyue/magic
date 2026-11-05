@@ -4,6 +4,7 @@
     {
       "id": "mat_qinglucao",
       "name": "清露草",
+      "art_id": "art_prop_qinglucao",
       "element_total": 3.0,
       "spectrum": { "el_liuzhuan": 0.70, "el_ningding": 0.30 },
       "fluctuation": 0.12,
@@ -13,6 +14,7 @@
     {
       "id": "mat_taiyi",
       "name": "苔衣",
+      "art_id": "art_prop_taiyi",
       "element_total": 3.0,
       "spectrum": { "el_ningding": 0.65, "el_liuzhuan": 0.35 },
       "fluctuation": 0.10,
@@ -31,6 +33,7 @@
     {
       "id": "mat_fengshisha",
       "name": "风蚀砂",
+      "art_id": "art_prop_fengshisha",
       "element_total": 3.0,
       "spectrum": { "el_misan": 0.70, "el_zhixu": 0.30 },
       "fluctuation": 0.18,
@@ -40,6 +43,7 @@
     {
       "id": "mat_shiyingsha",
       "name": "石英砂",
+      "art_id": "art_prop_shiyingsha",
       "element_total": 3.0,
       "spectrum": { "el_zhixu": 1.0 },
       "fluctuation": 0.08,

@@ -6,7 +6,9 @@ extends RefCounted
 func run(ctx: TestContext) -> void:
 	var db := ContentDatabase.new()
 	db.load_all()
-	ctx.check(db.errors.is_empty(), "确定性测试需要干净的内容数据")
+	if not db.errors.is_empty():
+		ctx.check(false, "内容数据不干净：" + str(db.errors))
+		return
 
 	var first := _run_script(db, 9173271)
 	var second := _run_script(db, 9173271)

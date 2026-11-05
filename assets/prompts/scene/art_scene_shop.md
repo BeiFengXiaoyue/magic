@@ -2,18 +2,18 @@
 id: art_scene_shop
 category: scene
 purpose: "小店室内背景：木地板、货架、公告板；柜台位置留空，供柜台独立叠加"
-status: draft
-workflow: generate img.json
+status: generated
+workflow: 无参考生图.json
 ref: null
 canvas: 1024x576
-seed: null
+seed: 1574640140360335762
 tier: demo
 ---
 
 ## 正向
 
 ```
-hand-drawn 2D game asset, Don't Starve ink illustration style, Rusty Lake moody atmosphere, thick dark ink outlines in #1A1714 (never pure black), rough hand-drawn linework, visible dry-brush stroke edges, subtle canvas paper texture overlay, heavily desaturated cold muted palette (aged wood #5C4B3A, grey stone #6E6A63, moss green #4A5240, faded blue #3E4A55, bone white #C9BFA8), dark chiaroscuro composition with 60-70% of the frame in shadow, a single warm amber light source (#D98C3F) as the only highlight, scratch-out watercolor highlights instead of white, hand-painted look, no gradients orthographic top-down view at a 45-degree angle, flat 2D rendering, no perspective distortion, no vanishing point, walkable game scene layout a single small walkable village shop interior, worn dark wooden floor, shelves with clay jars and folded cloth along the back wall, a blank wooden notice board on the right wall, a shuttered window on the left wall letting in cold grey light, one warm oil lamp above an empty counter area in the center-right, a doorway opening on the left wall, deep shadow in the corners, no characters, no counter, no merchandise on the floor, empty floor space ready for a separate wooden counter
+hand-drawn 2D game asset, Don't Starve ink illustration style, Rusty Lake moody atmosphere, thick dark ink outlines in #1A1714 (never pure black), rough hand-drawn linework, visible dry-brush stroke edges, subtle canvas paper texture overlay, heavily desaturated cold muted palette (aged wood #5C4B3A, grey stone #6E6A63, moss green #4A5240, faded blue #3E4A55, bone white #C9BFA8), dark chiaroscuro composition with 60-70% of the frame in shadow, a single warm amber light source (#D98C3F) as the only highlight, scratch-out watercolor highlights instead of white, hand-painted look, no gradients directly overhead top-down view looking straight down, flat 2D floor plan filling the entire frame edge to edge, walkable game scene layout a single small walkable village shop interior, worn dark wooden floor, shelves with clay jars and folded cloth along the back wall, a blank wooden notice board on the right wall, a shuttered window on the left wall letting in cold grey light, one warm oil lamp above an empty counter area in the center-right, a doorway opening on the left wall, deep shadow in the corners, an unoccupied room, bare floor in the center-right ready for a separate wooden counter, merchandise kept on the shelves only, a full-frame interior view filling the entire canvas edge to edge, walls and floor running past the frame borders, the room extending beyond the edges of the image
 ```
 
 ## 负向
