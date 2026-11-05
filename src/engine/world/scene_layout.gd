@@ -15,8 +15,14 @@ const FOREST := "scene_forest"
 
 const INDOOR_SIZE := Vector2(1280.0, 720.0)
 const FOREST_SIZE := Vector2(3200.0, 2400.0)
-const ROOM_MARGIN := 48.0
 const FOREST_MARGIN := 64.0
+
+## 可行走地面按烘焙背景图的墙内沿量出来（原图 1024×576，游戏内 ×1.25）：
+## 工坊地板 x≈155~890、y≈100~445；小店地板 x≈145~895、y≈80~490。
+## 上边界再留出角色身高：贴图从脚底向上画，否则头顶会压到上墙。
+const HERO_CLEARANCE := 120.0
+const WORKSHOP_FLOOR := Rect2(194.0, 245.0, 918.0, 311.0)
+const SHOP_FLOOR := Rect2(181.0, 220.0, 938.0, 392.0)
 
 ## 门都嵌在墙上：工坊底墙 y=600，小店左墙 x=170，对齐烘焙背景里的门洞 / 门框。
 const WORKSHOP_DOOR_SHOP := Vector2(280.0, 600.0)
@@ -31,9 +37,10 @@ const CRUCIBLE_ART_SIZE := 96.0
 const BED_ART_SIZE := 170.0
 const COUNTER_ART_SIZE := 230.0
 
-const CRUCIBLE_COLLIDER := Rect2(606.0, 352.0, 68.0, 52.0)
-const BED_COLLIDER := Rect2(225.0, 420.0, 150.0, 88.0)
-const COUNTER_COLLIDER := Rect2(740.0, 315.0, 214.0, 74.0)
+## 碰撞箱覆盖贴图的整个视觉占地：45° 俯视下也不让角色站进桌面 / 锅口 / 床面。
+const CRUCIBLE_COLLIDER := Rect2(592.0, 312.0, 96.0, 96.0)
+const BED_COLLIDER := Rect2(215.0, 364.0, 170.0, 152.0)
+const COUNTER_COLLIDER := Rect2(732.0, 235.0, 230.0, 160.0)
 
 const CRUCIBLE_INTERACT := Vector2(112.0, 112.0)
 const BED_INTERACT := Vector2(190.0, 170.0)
@@ -62,12 +69,9 @@ static func walkable_rect(scene_id: String) -> Rect2:
 			FOREST_SIZE.x - FOREST_MARGIN * 2.0,
 			FOREST_SIZE.y - FOREST_MARGIN * 2.0
 		)
-	return Rect2(
-		ROOM_MARGIN,
-		ROOM_MARGIN,
-		INDOOR_SIZE.x - ROOM_MARGIN * 2.0,
-		INDOOR_SIZE.y - ROOM_MARGIN * 2.0
-	)
+	if scene_id == SHOP:
+		return SHOP_FLOOR
+	return WORKSHOP_FLOOR
 
 
 static func camera_rect(scene_id: String) -> Rect2:
@@ -76,7 +80,7 @@ static func camera_rect(scene_id: String) -> Rect2:
 
 static func spawn(scene_id: String) -> Vector2:
 	if scene_id == WORKSHOP:
-		return Vector2(520.0, 540.0)
+		return Vector2(520.0, 500.0)
 	if scene_id == SHOP:
 		return Vector2(320.0, 520.0)
 	if scene_id == FOREST:

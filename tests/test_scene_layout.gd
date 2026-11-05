@@ -72,29 +72,41 @@ func _check_furniture(ctx: TestContext) -> void:
 
 
 func _check_doors(ctx: TestContext) -> void:
-	var walkable := SceneLayout.walkable_rect(SceneLayout.WORKSHOP)
 	for item in SceneLayout.interactables(SceneLayout.WORKSHOP):
 		if str(item.get("kind", "")) != "door":
 			continue
-		var position: Vector2 = item["position"]
-		var interact: Vector2 = item["interact_size"]
-		var rect := Rect2(position - interact * 0.5, interact)
-		ctx.check(
-			rect.end.y <= walkable.end.y,
-			"%s 的门框超出可行走区域" % str(item.get("target_id", ""))
-		)
 		ctx.check(
 			(item["collider"] as Rect2).size.x <= 0.0,
 			"%s 的门不应有碰撞箱" % str(item.get("target_id", ""))
 		)
-	ctx.check(
-		SceneLayout.WORKSHOP_DOOR_FOREST.y <= walkable.end.y,
-		"工坊底部门应嵌在墙上"
+	var workshop_area := SceneLayout.walkable_rect(SceneLayout.WORKSHOP).grow(-Player.MARGIN)
+	var workshop_doors := [SceneLayout.WORKSHOP_DOOR_SHOP, SceneLayout.WORKSHOP_DOOR_FOREST]
+	for door_position in workshop_doors:
+		var door_rect := Rect2(
+			door_position - SceneLayout.DOOR_INTERACT_SIZE * 0.5,
+			SceneLayout.DOOR_INTERACT_SIZE
+		)
+		ctx.check(
+			_rect_gap(door_rect, workshop_area) <= WorldView.INTERACT_PAD_PX,
+			"工坊门 %s 从地面走不到" % str(door_position)
+		)
+	var shop_area := SceneLayout.walkable_rect(SceneLayout.SHOP).grow(-Player.MARGIN)
+	var shop_door := Rect2(
+		SceneLayout.SHOP_DOOR_WORKSHOP - SceneLayout.DOOR_INTERACT_SIZE * 0.5,
+		SceneLayout.DOOR_INTERACT_SIZE
 	)
 	ctx.check(
-		SceneLayout.SHOP_DOOR_WORKSHOP.x >= walkable.position.x,
-		"小店左墙的门应在可行走边界内"
+		_rect_gap(shop_door, shop_area) <= WorldView.INTERACT_PAD_PX,
+		"小店左墙的门从地面走不到"
 	)
+
+
+func _rect_gap(a: Rect2, b: Rect2) -> float:
+	if a.intersects(b):
+		return 0.0
+	var dx := maxf(maxf(b.position.x - a.end.x, a.position.x - b.end.x), 0.0)
+	var dy := maxf(maxf(b.position.y - a.end.y, a.position.y - b.end.y), 0.0)
+	return Vector2(dx, dy).length()
 
 
 func _check_no_overlap(ctx: TestContext, scene_id: String) -> void:
