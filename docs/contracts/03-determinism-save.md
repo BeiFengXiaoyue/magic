@@ -1,6 +1,6 @@
 # 03 · 确定性与存档契约
 
-> **状态：草案 v0.2**（M2：新增 wild 流；存档持久化仍待 M4 前补）
+> **状态：草案 v0.4**（M2：新增 wild 流；M3：letters/journal 字段、普通信件范围与 `letters` 流不消费；存档持久化仍待 M4 前补）
 > 依据：`04-技术/架构设计.md` §4「随机的分区」· `02-玩法/游戏设计.md` §存档 · `04-技术/Demo 制作计划.md` 验收标准
 >
 > 验收标准"**同一种子重跑，结果一致**"由本契约保证。它成立与否，取决于随机是否被严格分区。
@@ -30,7 +30,7 @@ func restore(data: Dictionary) -> void
 | `device` | 设备温度波动（陶土坩埚 ±50°C） |
 | `market` | 市场日报、需求刷新偏向 |
 | `event` | 周期事件判定 |
-| `letters` | 信件相关随机（送达抖动等，M3） |
+| `letters` | 信件相关随机（送达抖动/随机信）；**M3 不消费**——到达条件全确定 |
 | `wild` | 森林野生资源布点（开局/跨天各一次） |
 
 ---
@@ -72,7 +72,8 @@ func restore(data: Dictionary) -> void
   "inventory": { "mat_qinglucao": 3, "mat_taiyi": 1 },                      // 材料只记份数（见 01 契约 §5）
   "products":  [ ],                                                          // M2：ProductInstance 数组（不可堆叠）；M2 先存内存，持久化 M4 前补
   "knowledge": { "recipes": [], "locations": [], "concepts": [], "blueprints": [] },
-  "letters":   { },                                                          // {ltr_id: {state, burn, repaired}}
+  "letters":   { },                                                          // {ltr_id: {status, delivered_day, read_day, awards}}；M3 只存内存
+  "journal":   { "next_id": 1, "entries": [], "notes": [] },                 // M3；条目格式见 05 §8.1
   "crucible":  null,                                                         // 炼制中不允许存档 ⇒ 恒为 null
   "nodes":     { },                                                          // {node_id: {regrow_at_day}}；M2 先存内存，持久化 M4 前补
   "market":    { "reputation": "mid", "rolling_q": [], "day_stock": {} },    // M2 起
@@ -102,8 +103,8 @@ func restore(data: Dictionary) -> void
 |---|---|
 | 存档路径 / 槽位 / `save()` / `load()` API（建议 `user://saves/slot_<n>.json`）；M2 验收不要求；持久化需含 ProductInstance / 采集点 / 金币 | M4 前 |
 | `Economy.list_price` 的 `P₀` 出处（constants 或 items.json）| M2 |
-| `Knowledge.kind` 的 `blueprint` 与存档字段对齐（存档已加 `blueprints: []`）| M3 |
-| 事件 / 信件字段的机器可读化 | M3 |
+| `Knowledge.kind` 的 `blueprint` 与存档字段对齐（存档已加 `blueprints: []`）| M3（字段已对齐，图纸内容 M4）|
+| 事件 / 信件字段的机器可读化 | M3 已由 [05 契约](05-letters-guidance.md) 定义；落盘 M4 |
 | CI 配置 / `.editorconfig` / 仓库 AGENTS.md | 后置 |
 
 ---
@@ -118,3 +119,6 @@ func restore(data: Dictionary) -> void
 | 4 | 换种子必须改变结果（测试显式断言） | 防止"确定性"被实现成"写死" |
 | 5 | `rng` 的 state 存十进制字符串 | Godot JSON 解析数字为 float，64 位 state 会丢精度 |
 | 6 | 新增 `wild` 流，只用于森林野生布点 | 与 `gather` 的空手判定分离，避免跨模块借用流 |
+| 7 | **`letters` 流 M3 不消费**；信件到达全由数据条件决定 | 无随机消费就没有「同操作序列不同结果」的风险；留作全量版送达抖动 |
+| 8 | **M3 的 `letters` / `journal` 只做内存快照**，落盘 M4 | M3 验收不要求读档；先让 D3/O4 可测、可重放 |
+| 9 | **M3 信件只存阅读状态**，不存深层/焦化/字谜 | 火烤/蘸水/折叠/字谜/修复后置；存档字段等实现时再增量加 |

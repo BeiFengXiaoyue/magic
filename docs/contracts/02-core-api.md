@@ -1,6 +1,6 @@
 # 02 · 内核与层间接口契约
 
-> **状态：草案 v0.5**（v0.4 回填 M2 实现；v0.5 补 forest()/has_node、WildSpawner 与 wild 事件）
+> **状态：草案 v0.6**（v0.4 回填 M2 实现；v0.5 补 forest()/has_node、WildSpawner 与 wild 事件；v0.6 补 D3 / O4 / O5-min 与 M3 事件键名）
 > 依据：`04-技术/架构设计.md` §4/§5 · `04-技术/Demo 制作计划.md` §3/§5 · `02-玩法/反应与条件.md` §4
 >
 > 本契约给出**可直接照着写代码的签名**。核心命题：`core / domain / app 三层删掉 engine 后仍能独立运行`。
@@ -22,6 +22,9 @@ func item(id: String) -> Dictionary                        # items.json；查不
 func node(id: String) -> Dictionary                        # nodes.json；同上
 func has_node(id: String) -> bool                           # 固定节点是否存在（野生 ID 走 WildSpawner）
 func forest() -> Dictionary                                 # forest.json 地图与刷新规则
+func letter(id: String) -> Dictionary                       # letters.json（M3）；查不到 → {} 且 push_error
+func letter_ids() -> Array[String]                          # letters.json 的 ID 列表（按 entries 顺序，M3）
+func concept_label(id: String) -> String                    # constants.concepts 的中文标签（M3）；查不到 → id
 func constant(path: String) -> Variant                     # 点分路径："pricing.elasticity"；缺失 → null 且 push_error
 func element_order(id: String) -> int                      # elements.json entries 的下标（tie-break 用）；查不到 → -1
 func item_ids() -> Array[String]                           # items.json 的 ID 列表
@@ -113,9 +116,13 @@ func total() -> int                                  # = p + s + t
 func apply_source(source_id: String) -> void         # 读 constants.spirituality.sources 的层与量
 func add(layer: String, amount: int, source: String) -> void   # layer: "P"|"S"|"T"
 func on_day_passed() -> void                         # T -= daily_t_decay，下限 0
+func perception_tier() -> String                     # "low"|"mid"|"high"（constants.perception.spirit_tiers）
+func snapshot() -> Dictionary                        # {p, s, t}
+func restore(snapshot: Dictionary) -> void
 ```
 
 > **纪律**：任何领域、任何层，一律经 `apply_source` / `add` 写入；禁止直接改 `p/s/t`。
+> M3 只消费 `read_mystic_letter`（读信 T+2）；深层解读/禁忌来源后置。定稿与幂等策略见 [05 契约](05-letters-guidance.md) §4.2。
 
 ### 1.7 Knowledge —— K6
 
@@ -123,8 +130,12 @@ func on_day_passed() -> void                         # T -= daily_t_decay，下�
 class_name Knowledge
 func unlock(kind: String, id: String) -> void   # kind: "recipe" | "location" | "concept" | "blueprint"
 func has(kind: String, id: String) -> bool
-func list(kind: String) -> Array[String]
+func list(kind: String) -> Array[String]        # 按解锁顺序
+func snapshot() -> Dictionary                   # {recipes, locations, concepts, blueprints}
+func restore(snapshot: Dictionary) -> void
 ```
+
+> 知识只影响手记/指引，不影响配方匹配与反应求解；M3 定稿见 [05 契约](05-letters-guidance.md) §4.3。
 
 ### 1.8 Perception —— ④ 感知通道（唯一特许跨层读）
 
@@ -193,6 +204,20 @@ func add_seals(amount: int) -> void
 func spend_gold(amount: int) -> bool   # 不足 → false
 func snapshot() -> Dictionary          # {gold: int, seals: int}
 ```
+
+### 1.12 Flags —— 布尔世界状态（M3 新增）
+
+```gdscript
+class_name Flags             # src/core/flags.gd
+
+func set_flag(id: String, value: Variant = true) -> void
+func has(id: String) -> bool          # 只看键是否存在，不判断值真假
+func value(id: String) -> Variant
+func snapshot() -> Dictionary
+func restore(snapshot: Dictionary) -> void
+```
+
+> M3 旗标：`flg_crucible_unlocked` / `flg_first_sale` / `flg_pressure_clue`；完整语义见 [05 契约](05-letters-guidance.md) §4.1。
 
 ---
 
@@ -313,7 +338,19 @@ P    = clamp(P₀ × season_mult × cm × (1 − 𝕜_弹性 × max(0, rolling_q
 
 ### 2.3 D3 叙事 / D4 角色
 
-**D3 叙事**：M3 前补契约（信件到达、交互、手记写入、指引落地）。
+**D3 叙事（M3 · 普通信件）**：完整契约见 [05 · 信件与引导契约](05-letters-guidance.md)。
+
+```gdscript
+class_name LetterBook        # src/domain/narrative/letter_book.gd
+class_name LetterState       # 单封信的运行时状态
+class_name Journal           # 手记：配方 / 记录 / 已知地点 / 线索
+```
+
+- `LetterBook`：到达条件求值、读信、浅层解锁、笔记；依赖 core 的 `ContentDatabase / GameClock / Flags / Knowledge / Spirituality` 与同子域的 `Journal`。
+- `Journal`：炼制记录（创建时固化散记/标准表格式）、已知采集点、线索。
+- `LetterState` 字段与全部方法签名见 05 §5；`LetterBook` 不得 import 其它领域。
+- M3 **不做**火烤/蘸水/折叠/字谜/焦页/修复；后置扩展点见 05 §12。
+- 跨层共享的布尔世界状态用 `core/flags.gd` 的 `Flags`（M3 新增），不要塞进 `Knowledge` 或 `Inventory`。
 
 **D4 角色（M2 最小集，评审 A4）**
 
@@ -405,12 +442,37 @@ func handle_scene_change(scene_id: String) -> bool   # 校验三场景后发 cue
 ```
 ```
 
-### O4 ~ O5（M3 / M4 逐步补）
+### O4 · 读一封信（M3 · 普通信件）
 
-| 用例 | 串起 | 里程碑 |
-|---|---|---|
-| O4 读一封信 | D3 到达 → D3 解读 → K5 涨灵性 | M3 |
-| O5 过一天 | K3 推进 → D4 结算 → 检查周期事件 | M4 |
+```gdscript
+class_name LetterUseCase
+
+func _init(db: ContentDatabase, letters: LetterBook, journal: Journal,
+           spirituality: Spirituality, knowledge: Knowledge,
+           publisher: CraftEventPublisher) -> void
+
+func refresh() -> Array[String]          # 到达检查 + 广播；返回新投递 ID
+func open(id: String) -> Dictionary      # 读信；成功后自动 refresh（链式下一封）
+
+func list_view(source: String = "") -> Array[Dictionary]   # source: "attic_box"|"mail_tray"|""（全部）
+func letter_view(id: String) -> Dictionary
+func journal_view(page: String) -> Dictionary   # "recipes" | "records"
+```
+
+- 完整流程、副作用与 payload 见 [05 契约](05-letters-guidance.md) §6。
+- M3 **没有** `act` / `wordbank` / `damaged_view`；火烤/字谜/修复后置。
+- O4 只读 `LetterBook`/`Journal` 的视图，不把领域对象暴露给引擎。
+
+### O5 · 过一天（M4；M3 先落最小版）
+
+```gdscript
+class_name DayUseCase
+func _init(spirituality: Spirituality, letters: LetterUseCase) -> void
+func on_day_passed(day: int, season: int, year: int) -> void
+```
+
+- M3 只做：`Spirituality.on_day_passed()` + `LetterUseCase.refresh()`；接 `GameClock.day_passed`。
+- M4 在此扩展睡眠、生存结算、市场刷新与周期事件（商队/节日）。
 
 ---
 
@@ -424,7 +486,7 @@ func handle_scene_change(scene_id: String) -> bool   # 校验三场景后发 cue
 | 项 | 契约 |
 |---|---|
 | 场景 ID | `scene_workshop`（工坊）· `scene_shop`（小店）· `scene_forest`（晨暮森林）——M2 三个 |
-| 交互物 `target_id` | `dev_clay_crucible`（坩埚）· `shop_counter`（柜台）· `node_*`（采集点）· `bed` · `door_shop` / `door_forest` / `door_workshop`（门） |
+| 交互物 `target_id` | `dev_clay_crucible`（坩埚）· `shop_counter`（柜台）· `node_*`（采集点）· `bed` · `door_shop` / `door_forest` / `door_workshop`（门）· `attic_box`（旧木箱，M3）· `mail_tray`（信盘，M3） |
 | 责权 | 引擎：移动（WASD）、距离判定、发现最近交互物并发 `interact`；**编排决定打开哪个面板 / 切哪个场景** |
 | 交互半径 | 引擎侧具名常量 `INTERACT_RADIUS_PX`（表现参数，不属数值表；M2 用占位值） |
 | 场景切换 | 玩家走进 `door_*` → 引擎发 `scene_change {scene_id}` → 编排校验后发 `panel/场景切换指令` → 引擎执行 |
@@ -442,7 +504,7 @@ signal cue_requested(cue: String, params: Dictionary)          # ③ 编排 → 
 signal state_changed(scope: String, payload: Dictionary)       # ③ 状态广播（HUD 刷新用）
 ```
 
-### 4.3 payload 键名契约（M1 + M2 首批）
+### 4.3 payload 键名契约（M1 + M2 + M3 首批）
 
 | 信号 | 取值 | payload 键 |
 |---|---|---|
@@ -464,8 +526,19 @@ signal state_changed(scope: String, payload: Dictionary)       # ③ 状态广�
 | | `"money"` | `{gold: int, seals: int}` |
 | | `"nodes"` | `{unavailable: [node_id: String]}` |
 | | `"wild"` | `{scene_id: String, nodes: [{id, material_id, tier, scene, position:{x,y}, action, amount}]}` |
+| `action_requested`（M3） | `"letter_open"` | `{letter_id: String}` |
+| | `"journal_open"` | `{page: "recipes"\|"records"}` |
+| `panel_requested`（M3） | `"letters"` | `{source: "attic_box"\|"mail_tray"\|"", letter_id?: String}` |
+| | `"journal"`（沿用 M1 行，page 语义扩展） | `{page: "recipes"\|"records"}` |
+| `cue_requested`（M3） | `"mail_arrived"` | `{ids: [String]}` |
+| `state_changed`（M3） | `"letters"` | `{delivered: int, unread: int}` |
+| | `"letter"` | `{letter_id, status, delivered_day, read_day}` |
+| | `"spirit"` | `{p, s, t, total, tier}`（隐藏值，不接 HUD 数字） |
+| | `"knowledge"` | `{recipes: [String], locations: [String], concepts: [String], blueprints: [String]}` |
+| | `"journal"` | `{entries: int, notes: int, format: String}` |
+| | `"flags"` | `{changed: String, value: Variant}` |
 
-> 键名即契约：新增 action / panel / scope 必须先在这里登记。
+> 键名即契约：新增 action / panel / scope 必须先在这里登记。M3 的完整语义与副作用见 [05 契约](05-letters-guidance.md) §7.5；M3 **没有** `letter_act` / `letter_repair` / `letter_burn`。
 
 ---
 

@@ -1,6 +1,6 @@
 # 00 · 命名与工程规范
 
-> **状态：草案 v0.2**（M2 补入 items/nodes/forest 与场景前缀）
+> **状态：草案 v0.3**（M2 补入 items/nodes/forest 与场景前缀；M3 补 `cpt_` 与 letters 校验）
 > 依据：`04-技术/架构设计.md` §2/§3 · `02-玩法/数值表.md` §5.1 · `02-玩法/反应与条件.md` §2
 >
 > 本契约是所有其他契约与代码共用的底座：ID、单位、目录、命名、纪律。
@@ -80,6 +80,7 @@ res://
 | `axis_` | 对立轴（3 条） | `axis_chiran_liuzhuan` |
 | `rcp_` | 配方 | `rcp_wenrun_tangji` |
 | `ltr_` | 信件 | `ltr_L02` |
+| `cpt_` | 概念（手记词条；后续字谜也用） | `cpt_yali` |
 | `dem_` | 需求（症状） | `dem_fali` |
 | `mob_` | 怪物 | `mob_yelang` |
 | `itm_` | 物品（药、道具等，材料以外） | `itm_...` |
@@ -144,6 +145,12 @@ res://
 **温度档 6**：`t_ice_bath` 冰浴 · `t_cold_soak` 冷浸 · `t_low_flame` 微火 · `t_mid_flame` 中火 · `t_high_flame` 大火 · `t_raging_flame` 猛火
 
 **轴 3**：`axis_chiran_liuzhuan` · `axis_ningding_misan` · `axis_zhixu_bianyi`
+
+**信件（M3 Demo）**：`ltr_L01` ~ `ltr_L05`（L01 埃利奥特 · L02 老波尔 · L03 艾琳 · L04 玛格丽特 · L05 胡克）
+
+**概念（M3）**：`cpt_huohou` 火候 · `cpt_pingheng` 平衡 · `cpt_nongdu` 浓度 · `cpt_yali` 压力 · `cpt_jilu_biaozhun` 标准记录 · `cpt_kongzhi_bianliang` 控制变量 · `cpt_kongzhi_li` 控制力
+
+**旗标（M3）**：`flg_crucible_unlocked` · `flg_first_sale` · `flg_pressure_clue`
 
 ---
 
@@ -218,7 +225,8 @@ res://
 12. `recipes.base_price` 为非负整数（M2 定价）；
 13. `items.json`：ID 以 `itm_` 开头、`category` ∈ {potion, residue}、`stackable` 为 bool；
 14. `nodes.json`：`material_id` 存在、`tier` ∈ 1~3、`scene` ∈ M2 三场景、`position` 含 x/y、`action` ∈ {gather, chop_or_mine}、`amount` ≥ 1；
-15. `forest.json`：scene/size/spawn/door、scenery、spawn_zones、wild_spawners 的引用与范围合法（见 01 §3.7）。
+15. `forest.json`：scene/size/spawn/door、scenery、spawn_zones、wild_spawners 的引用与范围合法（见 01 §3.7）；
+16. `letters.json`：字段、条件引用、`after_letter` 无环、M3 不出现 `deep`/`puzzle`（见 05 §3.7）。
 
 任何一条失败 → 启动即报错并列出全部违规项（不静默跳过）。
 

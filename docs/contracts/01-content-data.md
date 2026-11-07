@@ -1,6 +1,6 @@
 # 01 · 内容数据契约
 
-> **状态：草案 v0.2**（M2：items / nodes / forest / base_price）
+> **状态：草案 v0.3**（M2：items / nodes / forest / base_price；M3：concepts / perception / letters.json 指向 05）
 > 依据：`02-玩法/数值表.md` §2/§5 · `02-玩法/反应与条件.md` §2/§4
 >
 > 内容层是**纯数据**。新增元素 = 加一条数据，不改代码。
@@ -164,8 +164,11 @@
 | `position` | `{x:int, y:int}` | ✅ | 场景内坐标（占位美术阶段按色块坐标） |
 | `action` | `"gather"` \| `"chop_or_mine"` | ✅ | 决定耗时（10 / 30 游戏分钟） |
 | `amount` | int | ✅ | 单次产出份数 |
+| `name` | string | — | 手记显示名（M3）；缺省用材料名 |
+| `journal_hint` | string | — | 手记里的一句话方位（M3） |
 
 M2 固定 3 个点：`node_taiyi_01/02`（苔衣）、`node_shiyingsha_01`（石英砂）。
+M3 追加 `node_qinglucao_rare_01`（稀有清露草，L03 写入手记；节点本身常驻，无可见性门禁）。
 清露草与风蚀砂改为野生刷新，规则见 §3.7。
 再生：`regrow_at_day = 采集日 + constants.gathering.regrow_days_by_tier[tier]`；M2 存内存（存档 M4 前补）。
 
@@ -362,6 +365,29 @@ M2 固定 3 个点：`node_taiyi_01/02`（苔衣）、`node_shiyingsha_01`（石
 > `season_mult` 的键用 `season:int` 的字符串形式（JSON 键必为字符串）。
 > 配方未注明时长时，按配方所属阶从 `time.craft_minutes_by_tier` 兜底。
 
+### 4.1 M3 新增常量组
+
+以下两组并入 `constants.json`（完整字段与语义见 05 §3.4/§3.5）：
+
+```json
+"perception": {
+  "spirit_tiers": { "mid": 4, "high": 6 }
+},
+"concepts": {
+  "cpt_huohou": "火候",
+  "cpt_pingheng": "平衡",
+  "cpt_nongdu": "浓度",
+  "cpt_yali": "压力",
+  "cpt_jilu_biaozhun": "标准记录",
+  "cpt_kongzhi_bianliang": "控制变量",
+  "cpt_kongzhi_li": "控制力"
+}
+```
+
+- `perception.spirit_tiers` 只决定 `Perception.describe` 的描述丰富度；Demo 初值，正式阈值待补数值表 §1.1。
+- `concepts` 是手记词条（以及后续字谜词条）的标签唯一出处；不存数值。
+- `letter_interaction` 组在 M3 **不消费**（火烤/焦页/修复后置），保留给后续里程碑。
+
 ---
 
 ## 5. 本契约新定的决策（待评审确认）
@@ -386,7 +412,7 @@ M2 固定 3 个点：`node_taiyi_01/02`（苔衣）、`node_shiyingsha_01`（石
 
 | 文件 | 内容 | 需要它的里程碑 |
 |---|---|---|
-| `letters.json` | 信件（字段见信件与事件 §2.1 的十字段） | M3 |
+| `letters.json` | 信件（字段以 [05 契约](05-letters-guidance.md) §3 为准） | M3 |
 | `demands.json` | 若需求泛化，从 `constants.demand` 独立 | M2 收尾 |
 | `monsters.json` + 涂层 | 野狼/毒蛇、五行涂层（数值表 §5.5/§5.11） | M4 |
-| `items.json` 扩展 | 灰烬残页、道具等（大类契约已转正为 §3.5）| M3 |
+| `items.json` 扩展 | 灰烬残页、道具等（大类契约已转正为 §3.5）| M4 |
