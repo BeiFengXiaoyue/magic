@@ -21,6 +21,7 @@ var materials: Dictionary = {}
 var recipes: Dictionary = {}
 var items: Dictionary = {}
 var nodes: Dictionary = {}
+var letters: Dictionary = {}
 var forest: Dictionary = {}
 var constants: Dictionary = {}
 var element_order: Dictionary = {}
@@ -40,7 +41,8 @@ func validate(
 	items_doc: Variant,
 	nodes_doc: Variant,
 	forest_doc: Variant,
-	constants_doc: Variant
+	constants_doc: Variant,
+	letters_doc: Variant = null
 ) -> Array[String]:
 	_reset()
 	_index(elements_doc, "elements.json", elements, element_order)
@@ -48,6 +50,7 @@ func validate(
 	_index(recipes_doc, "recipes.json", recipes, {})
 	_index(items_doc, "items.json", items, {})
 	_index(nodes_doc, "nodes.json", nodes, {})
+	_index(letters_doc, "letters.json", letters, {})
 	if forest_doc is Dictionary:
 		forest = forest_doc
 	if constants_doc is Dictionary:
@@ -59,6 +62,7 @@ func validate(
 	_validate_items()
 	_validate_nodes()
 	_validate_forest()
+	_validate_letters()
 	return errors
 
 
@@ -69,6 +73,7 @@ func _reset() -> void:
 	recipes.clear()
 	items.clear()
 	nodes.clear()
+	letters.clear()
 	forest.clear()
 	constants.clear()
 	element_order.clear()
@@ -125,6 +130,7 @@ func _validate_constants() -> void:
 	_validate_device_constants()
 	_validate_demo_constants()
 	_validate_demand_constants()
+	_validate_concepts_perception()
 
 
 func _validate_vocabulary() -> void:
@@ -454,6 +460,10 @@ func _validate_nodes() -> void:
 		var amount: Variant = entry.get("amount", null)
 		if not _is_number(amount) or int(amount) < 1 or float(amount) != floor(float(amount)):
 			error("nodes.json: %s 的 amount 应为正整数" % str(id))
+		if entry.has("name") and not entry["name"] is String:
+			error("nodes.json: %s 的 name 应为字符串" % str(id))
+		if entry.has("journal_hint") and not entry["journal_hint"] is String:
+			error("nodes.json: %s 的 journal_hint 应为字符串" % str(id))
 
 
 func _validate_forest() -> void:
@@ -664,6 +674,235 @@ func _validate_forest_spawners(zone_habitats: Dictionary) -> void:
 		var min_distance: Variant = spawner.get("min_distance", null)
 		if not _is_number(min_distance) or float(min_distance) < 0.0:
 			error("forest.json: %s 的 min_distance 无效" % str(spawner_id))
+
+
+func _validate_concepts_perception() -> void:
+	var concepts: Variant = constants.get("concepts", null)
+	if not concepts is Dictionary or concepts.is_empty():
+		error("constants.json: 缺少 concepts 组")
+	else:
+		for concept_id in concepts:
+			if not concepts[concept_id] is String:
+				error("constants.json: concepts.%s 应为字符串" % str(concept_id))
+	var perception: Variant = constants.get("perception", null)
+	if not perception is Dictionary:
+		error("constants.json: 缺少 perception 组")
+		return
+	var tiers: Variant = perception.get("spirit_tiers", null)
+	if not tiers is Dictionary:
+		error("constants.json: 缺少 perception.spirit_tiers")
+		return
+	var mid: Variant = tiers.get("mid", null)
+	var high: Variant = tiers.get("high", null)
+	if not _is_number(mid) or not _is_number(high) or int(mid) < 1 or int(high) <= int(mid):
+		error("constants.json: perception.spirit_tiers 需为 mid ≥ 1 且 high > mid")
+
+
+func _validate_letters() -> void:
+	if letters.is_empty():
+		error("letters.json: 未载入")
+		return
+	var sources: Dictionary = {}
+	var spirituality: Variant = constants.get("spirituality", null)
+	if spirituality is Dictionary:
+		var raw_sources: Variant = spirituality.get("sources", null)
+		if raw_sources is Dictionary:
+			sources = raw_sources
+	var concepts: Dictionary = {}
+	var raw_concepts: Variant = constants.get("concepts", null)
+	if raw_concepts is Dictionary:
+		concepts = raw_concepts
+
+	for id in letters:
+		var entry: Dictionary = letters[id]
+		var letter_id := str(id)
+		if not letter_id.begins_with("ltr_"):
+			error("letters.json: %s 缺少 ltr_ 前缀" % letter_id)
+		var tier: Variant = entry.get("tier", null)
+		if not _is_number(tier) or int(tier) < 1 or int(tier) > MAX_TIER:
+			error("letters.json: %s 的 tier 应为 1~%d" % [letter_id, MAX_TIER])
+		var author: Variant = entry.get("author", null)
+		if not author is Dictionary:
+			error("letters.json: %s 缺少 author" % letter_id)
+		else:
+			if str(author.get("name", "")).strip_edges() == "":
+				error("letters.json: %s 的 author.name 为空" % letter_id)
+			if not author.get("id", null) is String:
+				error("letters.json: %s 的 author.id 应为字符串" % letter_id)
+			if not author.get("handwriting", "") is String:
+				error("letters.json: %s 的 author.handwriting 应为字符串" % letter_id)
+		if str(entry.get("title", "")).strip_edges() == "":
+			error("letters.json: %s 的 title 为空" % letter_id)
+		if str(entry.get("body", "")).strip_edges() == "":
+			error("letters.json: %s 的 body 为空" % letter_id)
+		for forbidden in ["deep", "puzzle", "shallow"]:
+			if entry.has(forbidden):
+				error("letters.json: %s 出现 %s；M3 不实现解密" % [letter_id, str(forbidden)])
+		_validate_letter_arrival(letter_id, entry.get("arrival", null))
+		_validate_letter_unlocks(letter_id, entry.get("unlocks", null), concepts)
+		_validate_letter_spirituality(letter_id, entry.get("spirituality", null), sources)
+		if letter_id == "ltr_L01" and not _letter_after_targets(entry).is_empty():
+			error("letters.json: ltr_L01 不允许 after_letter 条件")
+	_check_letter_cycles()
+
+
+func _validate_letter_arrival(letter_id: String, arrival: Variant) -> void:
+	if not arrival is Dictionary:
+		error("letters.json: %s 缺少 arrival" % letter_id)
+		return
+	var delivery := str(arrival.get("delivery", ""))
+	if delivery != "attic_box" and delivery != "mail_tray":
+		error("letters.json: %s 的 delivery 无效" % letter_id)
+	var carrier := str(arrival.get("carrier", ""))
+	if not ["box", "door", "caravan", "npc"].has(carrier):
+		error("letters.json: %s 的 carrier 无效" % letter_id)
+	var conditions: Variant = arrival.get("conditions", null)
+	if not conditions is Dictionary:
+		error("letters.json: %s 缺少 conditions" % letter_id)
+		return
+	var has_all: bool = conditions.has("all")
+	var has_any: bool = conditions.has("any")
+	if has_all == has_any:
+		error("letters.json: %s 的 conditions 必须恰有 all 或 any 之一" % letter_id)
+		return
+	var list: Variant = conditions.get("all", conditions.get("any", null))
+	if not list is Array or list.is_empty():
+		error("letters.json: %s 的 conditions 数组为空" % letter_id)
+		return
+	for condition in list:
+		_validate_letter_condition(letter_id, condition)
+
+
+func _validate_letter_condition(letter_id: String, condition: Variant) -> void:
+	if not condition is Dictionary:
+		error("letters.json: %s 的条件不是对象" % letter_id)
+		return
+	var condition_type := str(condition.get("type", ""))
+	match condition_type:
+		"day":
+			if not _is_number(condition.get("min", null)) or int(condition["min"]) < 1:
+				error("letters.json: %s 的 day.min 应为 ≥1 的整数" % letter_id)
+		"after_letter":
+			if not letters.has(str(condition.get("id", ""))):
+				error("letters.json: %s 的 after_letter 指向不存在的信" % letter_id)
+		"flag":
+			if not str(condition.get("id", "")).begins_with("flg_"):
+				error("letters.json: %s 的 flag 条件需要 flg_ 前缀" % letter_id)
+		"knowledge":
+			var kind := str(condition.get("kind", ""))
+			var target_id := str(condition.get("id", ""))
+			if kind == "recipe" and not recipes.has(target_id):
+				error("letters.json: %s 的知识条件引用不存在配方 %s" % [letter_id, target_id])
+			elif kind == "location" and not nodes.has(target_id):
+				error("letters.json: %s 的知识条件引用不存在地点 %s" % [letter_id, target_id])
+			elif kind == "concept":
+				var concepts: Variant = constants.get("concepts", null)
+				if not concepts is Dictionary or not concepts.has(target_id):
+					error("letters.json: %s 的知识条件引用不存在概念 %s" % [letter_id, target_id])
+			elif kind != "blueprint":
+				error("letters.json: %s 的知识条件 kind 无效" % letter_id)
+		_:
+			error("letters.json: %s 的条件 type 无效" % letter_id)
+
+
+func _validate_letter_unlocks(letter_id: String, unlocks: Variant, concepts: Dictionary) -> void:
+	if unlocks == null:
+		return
+	if not unlocks is Dictionary:
+		error("letters.json: %s 的 unlocks 不是对象" % letter_id)
+		return
+	var recipes_unlocked: Variant = unlocks.get("recipes", [])
+	for recipe_id in _string_array(recipes_unlocked, letter_id, "unlocks.recipes"):
+		if not recipes.has(recipe_id):
+			error("letters.json: %s 解锁不存在的配方 %s" % [letter_id, recipe_id])
+	var concepts_unlocked: Variant = unlocks.get("concepts", [])
+	for concept_id in _string_array(concepts_unlocked, letter_id, "unlocks.concepts"):
+		if not concepts.has(concept_id):
+			error("letters.json: %s 解锁不存在的概念 %s" % [letter_id, concept_id])
+	var locations_unlocked: Variant = unlocks.get("locations", [])
+	for location_id in _string_array(locations_unlocked, letter_id, "unlocks.locations"):
+		if not nodes.has(location_id):
+			error("letters.json: %s 解锁不存在的地点 %s" % [letter_id, location_id])
+	var flags_unlocked: Variant = unlocks.get("flags", [])
+	for flag_id in _string_array(flags_unlocked, letter_id, "unlocks.flags"):
+		if not flag_id.begins_with("flg_"):
+			error("letters.json: %s 解锁的旗标需要 flg_ 前缀" % letter_id)
+	var notes: Variant = unlocks.get("notes", [])
+	if not notes is Array:
+		error("letters.json: %s 的 unlocks.notes 应为数组" % letter_id)
+	else:
+		for note in notes:
+			if not note is String:
+				error("letters.json: %s 的 unlocks.notes 含非字符串" % letter_id)
+
+
+func _validate_letter_spirituality(
+	letter_id: String,
+	spirituality: Variant,
+	sources: Dictionary
+) -> void:
+	if not spirituality is Dictionary or not spirituality.has("on_read"):
+		error("letters.json: %s 缺少 spirituality.on_read" % letter_id)
+		return
+	var on_read: Variant = spirituality.get("on_read", null)
+	if on_read == null:
+		return
+	if not on_read is String or not sources.has(on_read):
+		error("letters.json: %s 的 spirituality.on_read 不在来源表中" % letter_id)
+	elif str(on_read) != "read_mystic_letter":
+		error("letters.json: %s 的 on_read 只允许 read_mystic_letter" % letter_id)
+
+
+func _string_array(value: Variant, letter_id: String, field: String) -> Array[String]:
+	var out: Array[String] = []
+	if not value is Array:
+		error("letters.json: %s 的 %s 应为数组" % [letter_id, field])
+		return out
+	for item in value:
+		if not item is String:
+			error("letters.json: %s 的 %s 含非字符串" % [letter_id, field])
+			continue
+		out.append(item)
+	return out
+
+
+func _letter_after_targets(entry: Dictionary) -> Array[String]:
+	var out: Array[String] = []
+	var arrival: Variant = entry.get("arrival", null)
+	if not arrival is Dictionary:
+		return out
+	var conditions: Variant = arrival.get("conditions", null)
+	if not conditions is Dictionary:
+		return out
+	var list: Variant = conditions.get("all", conditions.get("any", []))
+	if not list is Array:
+		return out
+	for condition in list:
+		if condition is Dictionary and str(condition.get("type", "")) == "after_letter":
+			out.append(str(condition.get("id", "")))
+	return out
+
+
+func _check_letter_cycles() -> void:
+	var visiting: Dictionary = {}
+	var visited: Dictionary = {}
+	for id in letters:
+		if _letter_cycle(str(id), visiting, visited):
+			error("letters.json: after_letter 存在环（%s）" % str(id))
+
+
+func _letter_cycle(id: String, visiting: Dictionary, visited: Dictionary) -> bool:
+	if visited.has(id):
+		return false
+	if visiting.has(id):
+		return true
+	visiting[id] = true
+	for target in _letter_after_targets(letters[id]):
+		if letters.has(target) and _letter_cycle(target, visiting, visited):
+			return true
+	visiting.erase(id)
+	visited[id] = true
+	return false
 
 
 func error(message: String) -> void:

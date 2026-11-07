@@ -1,0 +1,183 @@
+{
+  "schema_version": 1,
+  "entries": [
+    {
+      "id": "ltr_L01",
+      "tier": 1,
+      "author": {
+        "id": "eliot",
+        "name": "埃利奥特",
+        "handwriting": ""
+      },
+      "title": "致后来者",
+      "arrival": {
+        "delivery": "attic_box",
+        "carrier": "box",
+        "conditions": {
+          "all": [
+            {
+              "type": "day",
+              "min": 1
+            }
+          ]
+        }
+      },
+      "body": "致后来者：\n\n这间铺子我留给下一个人。\n锅、架子、炉子都还在，能用——别嫌它们旧，它们比我可靠。\n\n阁楼上那口箱子，先别开到底。\n第三层的东西，等你分得清“想要”和“需要”再说。\n\n——E. G.",
+      "unlocks": {
+        "flags": [
+          "flg_crucible_unlocked"
+        ]
+      },
+      "spirituality": {
+        "on_read": "read_mystic_letter"
+      }
+    },
+    {
+      "id": "ltr_L02",
+      "tier": 1,
+      "author": {
+        "id": "pol",
+        "name": "老波尔",
+        "handwriting": ""
+      },
+      "title": "第一条规则",
+      "arrival": {
+        "delivery": "mail_tray",
+        "carrier": "door",
+        "conditions": {
+          "all": [
+            {
+              "type": "after_letter",
+              "id": "ltr_L01"
+            }
+          ]
+        }
+      },
+      "body": "亲爱的同行：\n\n听说你接了格雷那间铺子。那么第一条，也是唯一一条真正重要的：\n\n凝定主修复，流转主载。二者同煮，可得温润之物。\n\n三份流，一份固。火别大——看到水面起细泡就停。\n\n别问我怎么知道的。\n\n——波尔",
+      "unlocks": {
+        "recipes": [
+          "rcp_wenrun_tangji"
+        ],
+        "concepts": [
+          "cpt_huohou"
+        ]
+      },
+      "spirituality": {
+        "on_read": "read_mystic_letter"
+      }
+    },
+    {
+      "id": "ltr_L03",
+      "tier": 1,
+      "author": {
+        "id": "ailin",
+        "name": "艾琳女士",
+        "handwriting": ""
+      },
+      "title": "清晨的雾",
+      "arrival": {
+        "delivery": "mail_tray",
+        "carrier": "door",
+        "conditions": {
+          "all": [
+            {
+              "type": "after_letter",
+              "id": "ltr_L02"
+            }
+          ]
+        }
+      },
+      "body": "你好，\n\n今天早晨南坡的雾比往常低。\n那种散得晚的地方，底下通常压着一片清露草。\n\n别只摘叶子——拔起来，根是甜的。\n\n——艾琳",
+      "unlocks": {
+        "locations": [
+          "node_qinglucao_rare_01"
+        ],
+        "notes": [
+          "南坡湿地：清露草（野生）",
+          "露根密丛：稀有清露草"
+        ]
+      },
+      "spirituality": {
+        "on_read": "read_mystic_letter"
+      }
+    },
+    {
+      "id": "ltr_L04",
+      "tier": 2,
+      "author": {
+        "id": "margaret",
+        "name": "玛格丽特·韦斯特",
+        "handwriting": ""
+      },
+      "title": "关于“大约”",
+      "arrival": {
+        "delivery": "mail_tray",
+        "carrier": "door",
+        "conditions": {
+          "all": [
+            {
+              "type": "after_letter",
+              "id": "ltr_L03"
+            },
+            {
+              "type": "flag",
+              "id": "flg_first_sale"
+            }
+          ]
+        }
+      },
+      "body": "先生：\n\n我注意到你在信里用了“大约”这个词三次。\n\n一次只改一个变量。否则你什么也学不到——你只会得到一堆“大概有用”的配方，\n然后在某一天发现它们全都不可复现。\n\n附上我用的记录表。抄一份。\n\n——M. W.",
+      "unlocks": {
+        "recipes": [
+          "rcp_tuire_ding"
+        ],
+        "concepts": [
+          "cpt_yali",
+          "cpt_jilu_biaozhun",
+          "cpt_kongzhi_bianliang"
+        ],
+        "notes": [
+          "记录表：改了什么 / 其他条件 / 结果 / 压力"
+        ]
+      },
+      "spirituality": {
+        "on_read": null
+      }
+    },
+    {
+      "id": "ltr_L05",
+      "tier": 2,
+      "author": {
+        "id": "hook",
+        "name": "胡克",
+        "handwriting": ""
+      },
+      "title": "第一个谜语",
+      "arrival": {
+        "delivery": "mail_tray",
+        "carrier": "caravan",
+        "conditions": {
+          "all": [
+            {
+              "type": "after_letter",
+              "id": "ltr_L04"
+            }
+          ]
+        }
+      },
+      "body": "致那位新来的：\n\n我不出谜语了——上次那个“先见其形，后知其量”，\n答案是“压力”。你迟早要买的东西，就是能压住它的装置。\n\n玛格丽特那张表第四栏空着，不是她忘了。\n她只是还没找到能填进去的东西。\n\n——胡克\n\n（附：我上一封信里也有个谜语。答案是我自己。）",
+      "unlocks": {
+        "concepts": [
+          "cpt_yali",
+          "cpt_kongzhi_li"
+        ],
+        "flags": [
+          "flg_pressure_clue"
+        ]
+      },
+      "spirituality": {
+        "on_read": "read_mystic_letter"
+      }
+    }
+  ]
+}

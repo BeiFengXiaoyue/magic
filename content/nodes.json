@@ -6,27 +6,56 @@
       "material_id": "mat_taiyi",
       "tier": 1,
       "scene": "scene_forest",
-      "position": { "x": 1000, "y": 600 },
+      "position": {
+        "x": 1000,
+        "y": 600
+      },
       "action": "gather",
-      "amount": 1
+      "amount": 1,
+      "name": "老树根·苔衣",
+      "journal_hint": "森林北侧，老树根背阴处"
     },
     {
       "id": "node_taiyi_02",
       "material_id": "mat_taiyi",
       "tier": 1,
       "scene": "scene_forest",
-      "position": { "x": 1500, "y": 400 },
+      "position": {
+        "x": 1500,
+        "y": 400
+      },
       "action": "gather",
-      "amount": 1
+      "amount": 1,
+      "name": "旧林·苔衣",
+      "journal_hint": "森林东北，倒木与树根之间"
     },
     {
       "id": "node_shiyingsha_01",
       "material_id": "mat_shiyingsha",
       "tier": 1,
       "scene": "scene_forest",
-      "position": { "x": 900, "y": 1600 },
+      "position": {
+        "x": 900,
+        "y": 1600
+      },
       "action": "gather",
-      "amount": 1
+      "amount": 1,
+      "name": "河床·石英砂",
+      "journal_hint": "森林西南，干涸河床的碎石间"
+    },
+    {
+      "id": "node_qinglucao_rare_01",
+      "material_id": "mat_qinglucao",
+      "tier": 1,
+      "scene": "scene_forest",
+      "position": {
+        "x": 1680,
+        "y": 1760
+      },
+      "action": "gather",
+      "amount": 3,
+      "name": "露根密丛",
+      "journal_hint": "南岸水边，树根背阴处"
     }
   ]
 }

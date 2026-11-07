@@ -11,6 +11,7 @@ var _materials: Dictionary = {}
 var _recipes: Dictionary = {}
 var _items: Dictionary = {}
 var _nodes: Dictionary = {}
+var _letters: Dictionary = {}
 var _forest: Dictionary = {}
 var _constants: Dictionary = {}
 var _element_order: Dictionary = {}
@@ -23,6 +24,7 @@ func load_all(path: String = "res://content") -> void:
 	var recipes_doc: Variant = _read_json(path.path_join("recipes.json"), "recipes.json")
 	var items_doc: Variant = _read_json(path.path_join("items.json"), "items.json")
 	var nodes_doc: Variant = _read_json(path.path_join("nodes.json"), "nodes.json")
+	var letters_doc: Variant = _read_json(path.path_join("letters.json"), "letters.json")
 	var forest_doc: Variant = _read_json(path.path_join("forest.json"), "forest.json")
 	var constants_doc: Variant = _read_json(path.path_join("constants.json"), "constants.json")
 
@@ -34,13 +36,15 @@ func load_all(path: String = "res://content") -> void:
 		items_doc,
 		nodes_doc,
 		forest_doc,
-		constants_doc
+		constants_doc,
+		letters_doc
 	)
 	_elements = validator.elements
 	_materials = validator.materials
 	_recipes = validator.recipes
 	_items = validator.items
 	_nodes = validator.nodes
+	_letters = validator.letters
 	_forest = validator.forest
 	_constants = validator.constants
 	_element_order = validator.element_order
@@ -86,6 +90,17 @@ func node(id: String) -> Dictionary:
 
 func has_node(id: String) -> bool:
 	return _nodes.has(id)
+
+
+func letter(id: String) -> Dictionary:
+	if not _letters.has(id):
+		push_error("ContentDatabase: 未知信件 %s" % id)
+		return {}
+	return _letters[id]
+
+
+func has_letter(id: String) -> bool:
+	return _letters.has(id)
 
 
 func forest() -> Dictionary:
@@ -136,6 +151,10 @@ func node_ids() -> Array[String]:
 	return _sorted_ids(_nodes)
 
 
+func letter_ids() -> Array[String]:
+	return _sorted_ids(_letters)
+
+
 func _sorted_ids(source: Dictionary) -> Array[String]:
 	var out: Array[String] = []
 	for id in source:
@@ -150,6 +169,7 @@ func _reset() -> void:
 	_recipes.clear()
 	_items.clear()
 	_nodes.clear()
+	_letters.clear()
 	_forest.clear()
 	_constants.clear()
 	_element_order.clear()
