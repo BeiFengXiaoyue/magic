@@ -17,6 +17,8 @@ const TESTS: Array[String] = [
 	"res://tests/test_spirituality.gd",
 	"res://tests/test_knowledge_flags.gd",
 	"res://tests/test_perception_spirit.gd",
+	"res://tests/test_letter_lifecycle.gd",
+	"res://tests/test_journal.gd",
 	"res://tests/test_layer_boundaries.gd",
 	"res://tests/test_no_magic_numbers.gd",
 ]
