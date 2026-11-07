@@ -13,11 +13,17 @@ const DOOR_TARGETS := {
 
 var _publisher: CraftEventPublisher
 var _gather: GatherUseCase
+var _flags: Flags = null
 
 
-func _init(publisher: CraftEventPublisher = null, gather: GatherUseCase = null) -> void:
+func _init(
+	publisher: CraftEventPublisher = null,
+	gather: GatherUseCase = null,
+	flags: Flags = null
+) -> void:
 	_publisher = publisher
 	_gather = gather
+	_flags = flags
 
 
 func handle(target_id: String) -> Dictionary:
@@ -25,13 +31,25 @@ func handle(target_id: String) -> Dictionary:
 		return _gather.gather(target_id)
 	match target_id:
 		"dev_clay_crucible":
+			if _flags != null and not _flags.has("flg_crucible_unlocked"):
+				return {
+					"handled": true,
+					"kind": "message",
+					"message": "锅是冷的。先看看那只旧木箱。",
+				}
 			_publish_panel("crucible")
 			return { "handled": true, "kind": "panel", "message": "" }
 		"shop_counter":
 			_publish_panel("shop")
 			return { "handled": true, "kind": "panel", "message": "" }
+		"attic_box":
+			_publish_panel_with("letters", { "source": "attic_box" })
+			return { "handled": true, "kind": "panel", "message": "旧木箱" }
+		"mail_tray":
+			_publish_panel_with("letters", { "source": "mail_tray" })
+			return { "handled": true, "kind": "panel", "message": "信盘" }
 		"bed":
-			return { "handled": true, "kind": "message", "message": "M2 还不能睡觉。" }
+			return { "handled": true, "kind": "message", "message": "M3 还不能睡觉。" }
 	if DOOR_TARGETS.has(target_id):
 		handle_scene_change(str(DOOR_TARGETS[target_id]))
 		return { "handled": true, "kind": "scene", "message": "" }
@@ -49,3 +67,8 @@ func handle_scene_change(scene_id: String) -> bool:
 func _publish_panel(panel: String) -> void:
 	if _publisher != null:
 		_publisher.publish_panel(panel, {})
+
+
+func _publish_panel_with(panel: String, params: Dictionary) -> void:
+	if _publisher != null:
+		_publisher.publish_panel(panel, params)

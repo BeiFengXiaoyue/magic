@@ -59,6 +59,54 @@ func publish_wild(scene_id: String, nodes: Array) -> void:
 	_emit("state_changed", "wild", { "scene_id": scene_id, "nodes": nodes })
 
 
+func publish_letters(delivered: int, unread: int) -> void:
+	_emit("state_changed", "letters", { "delivered": delivered, "unread": unread })
+
+
+func publish_letter(state: LetterState) -> void:
+	_emit("state_changed", "letter", {
+		"letter_id": state.id,
+		"status": state.status,
+		"delivered_day": state.delivered_day,
+		"read_day": state.read_day,
+	})
+
+
+func publish_spirit(spirit: Spirituality) -> void:
+	_emit("state_changed", "spirit", {
+		"p": spirit.p,
+		"s": spirit.s,
+		"t": spirit.t,
+		"total": spirit.total(),
+		"tier": spirit.perception_tier(),
+	})
+
+
+func publish_knowledge(knowledge: Knowledge) -> void:
+	_emit("state_changed", "knowledge", {
+		"recipes": knowledge.list("recipe"),
+		"locations": knowledge.list("location"),
+		"concepts": knowledge.list("concept"),
+		"blueprints": knowledge.list("blueprint"),
+	})
+
+
+func publish_journal(journal: Journal) -> void:
+	_emit("state_changed", "journal", {
+		"entries": journal.records_view().size(),
+		"notes": journal.notes_view().size(),
+		"format": journal.record_format(),
+	})
+
+
+func publish_flags(changed: String, value: Variant) -> void:
+	_emit("state_changed", "flags", { "changed": changed, "value": value })
+
+
+func publish_mail_arrived(ids: Array[String]) -> void:
+	_emit("cue_requested", "mail_arrived", { "ids": ids })
+
+
 func publish_panel(panel: String, params: Dictionary) -> void:
 	if _event_bus == null:
 		return

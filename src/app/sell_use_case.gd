@@ -10,6 +10,7 @@ var _inventory: Inventory
 var _wallet: Wallet
 var _clock: GameClock
 var _publisher: CraftEventPublisher
+var _flags: Flags = null
 var _rolling_q: int = 0
 var _last_day: int = -1
 
@@ -20,7 +21,8 @@ func _init(
 	inventory: Inventory,
 	wallet: Wallet,
 	clock: GameClock,
-	publisher: CraftEventPublisher = null
+	publisher: CraftEventPublisher = null,
+	flags: Flags = null
 ) -> void:
 	_db = db
 	_economy = economy
@@ -28,6 +30,7 @@ func _init(
 	_wallet = wallet
 	_clock = clock
 	_publisher = publisher
+	_flags = flags
 	_last_day = clock.today()
 
 
@@ -75,6 +78,10 @@ func sell(product_index: int) -> Dictionary:
 	var price := int(quote_result["price"])
 	_wallet.add_gold(price)
 	_rolling_q += 1
+	if _flags != null and not _flags.has("flg_first_sale"):
+		_flags.set_flag("flg_first_sale")
+		if _publisher != null:
+			_publisher.publish_flags("flg_first_sale", true)
 	_publish_state()
 	return {
 		"sold": true,

@@ -9,6 +9,8 @@ var _clock: GameClock
 var _inventory: Inventory
 var _process: CraftProcess
 var _publisher: CraftEventPublisher
+var _journal: Journal = null
+var _spirituality: Spirituality = null
 var _session: CraftSession = null
 var _session_counter: int = 0
 
@@ -18,13 +20,17 @@ func _init(
 	clock: GameClock,
 	inventory: Inventory,
 	process: CraftProcess,
-	publisher: CraftEventPublisher = null
+	publisher: CraftEventPublisher = null,
+	journal: Journal = null,
+	spirituality: Spirituality = null
 ) -> void:
 	_db = db
 	_clock = clock
 	_inventory = inventory
 	_process = process
 	_publisher = publisher
+	_journal = journal
+	_spirituality = spirituality
 
 
 func begin(inputs: Dictionary, tier_id: String) -> String:
@@ -76,18 +82,29 @@ func set_tier(tier_id: String) -> void:
 func take_out() -> CraftResult:
 	if _session == null:
 		return null
-	var result := _process.take_out(_session)
+	var session := _session
+	var result := _process.take_out(session)
 	if result == null:
 		return null
 	var product := ProductInstance.new()
 	product.itm_id = "itm_potion"
-	product.recipe_id = _session.recipe_id
+	product.recipe_id = session.recipe_id
 	product.result = result
 	product.created_day = _clock.today()
 	var item := _db.item(product.itm_id)
 	product.itm_name = str(item.get("name", product.itm_id))
 	_inventory.add_product(product)
 	_session = null
+	if _journal != null:
+		_journal.add_craft_entry(result, {
+			"inputs": session.inputs.duplicate(),
+			"tier_id": session.tier_id,
+			"duration_minutes": session.duration_minutes,
+			"device_id": str(_db.constant("device.default_id")),
+			"spirit_total": _spirituality.total() if _spirituality != null else 0,
+			"day": _clock.today(),
+			"minute_of_day": _clock.minute_of_day,
+		})
 	_publish_inventory()
 	_publish_crucible()
 	return result
