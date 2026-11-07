@@ -20,8 +20,8 @@ func run(ctx: TestContext) -> void:
 
 func _check_scene_counts(ctx: TestContext) -> void:
 	ctx.check_eq(
-		SceneLayout.interactables(SceneLayout.WORKSHOP).size(), 4,
-		"工坊应有坩埚、床与两扇门"
+		SceneLayout.interactables(SceneLayout.WORKSHOP).size(), 6,
+		"工坊应有坩埚、床、两扇门、旧木箱与信盘"
 	)
 	ctx.check_eq(
 		SceneLayout.interactables(SceneLayout.SHOP).size(), 2,

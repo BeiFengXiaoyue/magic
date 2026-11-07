@@ -10,6 +10,7 @@ var _time_label: Label
 var _scene_label: Label
 var _player_label: Label
 var _money_label: Label
+var _mail_label: Label
 var _demand_label: Label
 var _hint_label: Label
 var _message_label: Label
@@ -24,6 +25,7 @@ func setup() -> void:
 	_scene_label = UiTheme.label("")
 	_player_label = UiTheme.label("")
 	_money_label = UiTheme.label("")
+	_mail_label = UiTheme.label("")
 	_demand_label = UiTheme.label("")
 	_hint_label = UiTheme.label("")
 	_message_label = UiTheme.label("")
@@ -31,6 +33,7 @@ func setup() -> void:
 	add_child(_scene_label)
 	add_child(_player_label)
 	add_child(_money_label)
+	add_child(_mail_label)
 	add_child(_demand_label)
 	add_child(_hint_label)
 	add_child(_message_label)
@@ -53,6 +56,10 @@ func set_player(hp: int, sanity: int) -> void:
 
 func set_money(gold: int) -> void:
 	_money_label.text = "金币 %d" % gold
+
+
+func set_mail(unread: int) -> void:
+	_mail_label.text = ("信件：%d 未读" % unread) if unread > 0 else ""
 
 
 func set_demand(text: String) -> void:

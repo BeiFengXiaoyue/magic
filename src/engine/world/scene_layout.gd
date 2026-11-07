@@ -121,6 +121,14 @@ static func interactables(scene_id: String) -> Array[Dictionary]:
 			"door_forest", WORKSHOP_DOOR_FOREST, "去晨暮森林", "door",
 			"art_prop_door_wood", DOOR_ART_SIZE, DOOR_INTERACT_SIZE
 		))
+		out.append(_item(
+			"attic_box", Vector2(980.0, 450.0), "旧木箱", "attic_box",
+			"", 0.0, Vector2(90.0, 90.0), Rect2(940.0, 415.0, 80.0, 70.0)
+		))
+		out.append(_item(
+			"mail_tray", Vector2(760.0, 600.0), "信盘", "mail_tray",
+			"", 0.0, Vector2(80.0, 80.0)
+		))
 	elif scene_id == SHOP:
 		out.append(_item(
 			"shop_counter", Vector2(847.0, 315.0), "柜台", "counter",
@@ -133,7 +141,7 @@ static func interactables(scene_id: String) -> Array[Dictionary]:
 		))
 	elif scene_id == FOREST:
 		out.append(_item(
-			"door_workshop", FOREST_DOOR_POS, "回工坊", "door",
+			"door_forest", WORKSHOP_DOOR_FOREST, "去晨暮森林", "door",
 			"", 0.0, DOOR_INTERACT_SIZE
 		))
 	return out

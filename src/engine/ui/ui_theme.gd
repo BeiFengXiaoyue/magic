@@ -49,3 +49,16 @@ static func label(text: String) -> Label:
 	label.add_theme_color_override("font_outline_color", COLOR_OUTLINE)
 	label.add_theme_constant_override("outline_size", OUTLINE_SIZE)
 	return label
+
+
+static func panel_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = COLOR_PANEL
+	style.border_color = COLOR_ACCENT
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(0)
+	style.content_margin_left = 16.0
+	style.content_margin_right = 16.0
+	style.content_margin_top = 12.0
+	style.content_margin_bottom = 12.0
+	return style

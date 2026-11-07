@@ -30,6 +30,13 @@ var _gather: GatherUseCase
 var _wild_spawner: WildSpawner
 var _sell: SellUseCase
 var _interact: InteractUseCase
+var _flags: Flags
+var _knowledge: Knowledge
+var _spirituality: Spirituality
+var _journal: Journal
+var _letters: LetterBook
+var _letter_use_case: LetterUseCase
+var _day_use_case: DayUseCase
 
 var _world: WorldView
 var _ui_layer: CanvasLayer
@@ -39,8 +46,13 @@ var _shelf: MaterialShelf
 var _crucible: CruciblePanel
 var _observation: ObservationPanel
 var _shop: ShopPanel
+var _letter_panel: LetterPanel
+var _journal_panel: JournalPanel
 var _crucible_overlay: CenterContainer
 var _shop_overlay: CenterContainer
+var _letter_overlay: CenterContainer
+var _journal_overlay: CenterContainer
+var _letter_source: String = ""
 
 var _pending_inputs: Dictionary = {}
 var _pending_tier: String = DEFAULT_TIER
@@ -60,7 +72,8 @@ func _ready() -> void:
 	_connect_signals()
 	_start_scene()
 	_refresh_all()
-	_hud.set_message("去晨暮森林采集材料，回来炼第一炉。")
+	_letter_use_case.refresh()
+	_hud.set_message("锅是冷的。先看看那只旧木箱。")
 
 
 func _process(delta: float) -> void:
@@ -87,6 +100,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif key_event.keycode == KEY_B:
 		var enabled := _world.toggle_debug_zones()
 		_hud.set_message("布点模式：%s" % ("开" if enabled else "关"))
+	elif key_event.keycode == KEY_J:
+		_open_journal("records")
 	elif key_event.keycode == KEY_ESCAPE:
 		_close_panels()
 
@@ -104,7 +119,7 @@ func _build_world_ui() -> void:
 	_ui_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_ui_root.theme = theme
 	_ui_layer.add_child(_ui_root)
-	_ui_root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_ui_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	_hud = GameHud.new()
 	_ui_root.add_child(_hud)
@@ -156,13 +171,34 @@ func _build_panels() -> void:
 	shop_frame.add_child(_shop)
 	_shop_overlay.add_child(shop_frame)
 
+	_letter_overlay = _make_overlay()
+	var letter_frame := PanelContainer.new()
+	letter_frame.custom_minimum_size = Vector2(1000.0, 640.0)
+	letter_frame.add_theme_stylebox_override("panel", UiTheme.panel_style())
+	_letter_panel = LetterPanel.new()
+	_letter_panel.setup()
+	_letter_panel.letter_selected.connect(_on_letter_selected)
+	_letter_panel.close_requested.connect(_close_panels)
+	letter_frame.add_child(_letter_panel)
+	_letter_overlay.add_child(letter_frame)
+
+	_journal_overlay = _make_overlay()
+	var journal_frame := PanelContainer.new()
+	journal_frame.custom_minimum_size = Vector2(920.0, 640.0)
+	journal_frame.add_theme_stylebox_override("panel", UiTheme.panel_style())
+	_journal_panel = JournalPanel.new()
+	_journal_panel.setup()
+	_journal_panel.close_requested.connect(_close_panels)
+	journal_frame.add_child(_journal_panel)
+	_journal_overlay.add_child(journal_frame)
+
 
 func _make_overlay() -> CenterContainer:
 	var overlay := CenterContainer.new()
-	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	overlay.visible = false
 	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	_ui_root.add_child(overlay)
+	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	return overlay
 
 
@@ -176,18 +212,28 @@ func _assemble() -> void:
 		_inventory.add_material(str(mat_id), int(starting[mat_id]))
 	_character = CharacterState.new(_db)
 	_wallet = Wallet.new()
+	_flags = Flags.new()
+	_knowledge = Knowledge.new()
+	_spirituality = Spirituality.new(_db)
+	_perception = Perception.new(_db)
+	_journal = Journal.new(_db, _knowledge, _perception)
 
 	var solver := ReactionSolver.new(_db)
 	_craft_process = CraftProcess.new(_db, _rng, solver)
 	_gather_process = GatherProcess.new(_db)
 	_economy = Economy.new(_db)
-	_perception = Perception.new(_db)
 	_publisher = CraftEventPublisher.new(Events, _perception)
-	_use_case = CraftUseCase.new(_db, _clock, _inventory, _craft_process, _publisher)
+	_use_case = CraftUseCase.new(
+		_db, _clock, _inventory, _craft_process, _publisher, _journal, _spirituality
+	)
 	_wild_spawner = WildSpawner.new(_db, _rng)
 	_gather = GatherUseCase.new(_db, _gather_process, _inventory, _character, _clock, _rng, _wild_spawner, _publisher)
-	_sell = SellUseCase.new(_db, _economy, _inventory, _wallet, _clock, _publisher)
-	_interact = InteractUseCase.new(_publisher, _gather)
+	_sell = SellUseCase.new(_db, _economy, _inventory, _wallet, _clock, _publisher, _flags)
+	_interact = InteractUseCase.new(_publisher, _gather, _flags)
+	_letters = LetterBook.new(_db, _clock, _flags, _knowledge, _spirituality, _journal)
+	_letter_use_case = LetterUseCase.new(_db, _letters, _journal, _spirituality, _knowledge, _publisher)
+	_day_use_case = DayUseCase.new(_spirituality, _letter_use_case)
+	_clock.day_passed.connect(_on_day_passed)
 	_time_driver = GameTimeDriver.new(_db, _use_case)
 
 
@@ -278,6 +324,10 @@ func _on_action_requested(action: String, payload: Dictionary) -> void:
 			_start()
 		"crucible_take_out":
 			_take_out()
+		"letter_open":
+			_on_letter_selected(str(payload.get("letter_id", "")))
+		"journal_open":
+			_open_journal(str(payload.get("page", "records")))
 		_:
 			_hud.set_message("未知操作：%s" % action)
 
@@ -320,18 +370,24 @@ func _sell_product(product_index: int) -> void:
 	_refresh_shop()
 	if bool(result.get("sold", false)):
 		_shop.set_status("卖出，获得 %d 金币。" % int(result.get("price", 0)))
+		if _letter_use_case != null:
+			_letter_use_case.refresh()
 	elif str(result.get("reason", "")) == "no_demand":
 		_shop.set_status("卖不掉：需求覆盖不足。")
 	else:
 		_shop.set_status("这瓶不能卖。")
 
 
-func _on_panel_requested(panel: String, _params: Dictionary) -> void:
+func _on_panel_requested(panel: String, params: Dictionary) -> void:
 	match panel:
 		"crucible":
 			_open_crucible()
 		"shop":
 			_open_shop()
+		"letters":
+			_open_letters(str(params.get("source", "")))
+		"journal":
+			_open_journal(str(params.get("page", "records")))
 
 
 func _open_crucible() -> void:
@@ -359,8 +415,67 @@ func _close_panels() -> void:
 		_crucible_overlay.visible = false
 	if _shop_overlay != null:
 		_shop_overlay.visible = false
+	if _letter_overlay != null:
+		_letter_overlay.visible = false
+	if _journal_overlay != null:
+		_journal_overlay.visible = false
 	if _world != null:
 		_world.set_input_enabled(true)
+
+
+func _open_letters(source: String) -> void:
+	if _letter_use_case == null:
+		return
+	_letter_source = source
+	_letter_overlay.visible = true
+	_crucible_overlay.visible = false
+	_shop_overlay.visible = false
+	_journal_overlay.visible = false
+	_world.set_input_enabled(false)
+	_letter_panel.set_status("")
+	_refresh_letter_list()
+
+
+func _refresh_letter_list() -> void:
+	if _letter_use_case == null:
+		return
+	_letter_panel.show_list(_letter_use_case.list_view(_letter_source))
+
+
+func _on_letter_selected(letter_id: String) -> void:
+	if _letter_use_case == null or letter_id == "":
+		return
+	var result := _letter_use_case.open(letter_id)
+	if bool(result.get("ok", false)):
+		_letter_panel.show_letter(result.get("view", {}))
+		_hud.set_mail(_letters.unread_ids().size())
+
+
+func _open_journal(page: String) -> void:
+	if _letter_use_case == null:
+		return
+	_journal_overlay.visible = true
+	_crucible_overlay.visible = false
+	_shop_overlay.visible = false
+	_letter_overlay.visible = false
+	_world.set_input_enabled(false)
+	_refresh_journal()
+	_journal_panel.show_page(page)
+
+
+func _refresh_journal() -> void:
+	if _letter_use_case == null:
+		return
+	var recipes_view := _letter_use_case.journal_view("recipes")
+	_journal_panel.refresh_recipes(recipes_view.get("recipes", []))
+	_journal_panel.refresh_records(_letter_use_case.journal_view("records"))
+
+
+func _on_day_passed(day: int, season: int, year: int) -> void:
+	if _day_use_case == null:
+		return
+	_day_use_case.on_day_passed(day, season, year)
+	_hud.set_time(_time_text())
 
 
 func _refresh_shop() -> void:
@@ -464,6 +579,11 @@ func _on_state_changed(scope: String, payload: Dictionary) -> void:
 			_hud.set_player(int(payload.get("hp", 0)), int(payload.get("sanity", 0)))
 		"money":
 			_hud.set_money(int(payload.get("gold", 0)))
+		"letters":
+			_hud.set_mail(int(payload.get("unread", 0)))
+		"knowledge", "journal":
+			if _journal_overlay != null and _journal_overlay.visible:
+				_refresh_journal()
 		"nodes":
 			_world.set_node_availability(_as_string_array(payload.get("unavailable", [])))
 		"wild":
@@ -497,6 +617,8 @@ func _on_cue_requested(cue: String, params: Dictionary) -> void:
 			)
 		"scene":
 			_change_scene(str(params.get("scene_id", "")))
+		"mail_arrived":
+			_hud.set_message("门口有新的信。")
 
 
 func _refresh_all() -> void:
@@ -507,6 +629,7 @@ func _refresh_all() -> void:
 	_hud.set_time(_time_text())
 	_hud.set_player(_character.hp, _character.sanity)
 	_hud.set_money(_wallet.gold)
+	_hud.set_mail(_letters.unread_ids().size() if _letters != null else 0)
 	_hud.set_demand(_demand_text())
 
 

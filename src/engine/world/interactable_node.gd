@@ -11,6 +11,8 @@ const COLOR_DOOR := Color("#8a6a4a")
 const COLOR_DOOR_FRAME := Color("#2a1f16")
 const COLOR_NODE := Color("#6f9a5a")
 const COLOR_WILD := Color("#b7d27a")
+const COLOR_BOX := Color("#5c4b3a")
+const COLOR_TRAY := Color("#6e6a63")
 const COLOR_UNAVAILABLE := Color("#4a4a4a")
 
 var target_id: String = ""
@@ -46,6 +48,10 @@ func setup(
 		_base_color = COLOR_NODE
 	elif kind == "door":
 		_base_color = COLOR_DOOR
+	elif kind == "attic_box":
+		_base_color = COLOR_BOX
+	elif kind == "mail_tray":
+		_base_color = COLOR_TRAY
 	queue_redraw()
 
 
@@ -110,6 +116,13 @@ func _draw() -> void:
 		draw_rect(Rect2(-40.0, -20.0, 80.0, 40.0), color)
 	elif kind == "bed":
 		draw_rect(Rect2(-32.0, -20.0, 64.0, 40.0), color)
+	elif kind == "attic_box":
+		draw_rect(Rect2(-32.0, -24.0, 64.0, 48.0), color)
+		draw_rect(Rect2(-32.0, -24.0, 64.0, 48.0), COLOR_DOOR_FRAME, false, 3.0)
+		draw_line(Vector2(-32.0, -6.0), Vector2(32.0, -6.0), COLOR_DOOR_FRAME, 2.0)
+	elif kind == "mail_tray":
+		draw_rect(Rect2(-24.0, -10.0, 48.0, 20.0), color)
+		draw_rect(Rect2(-24.0, -10.0, 48.0, 20.0), COLOR_DOOR_FRAME, false, 2.0)
 	else:
 		var radius := WILD_RADIUS if wild else RADIUS
 		draw_circle(Vector2.ZERO, radius, color)
