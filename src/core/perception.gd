@@ -4,9 +4,9 @@ extends RefCounted
 ## 感知通道（契约 02 §1.8）。引擎唯一允许直接调用的内核输出。
 ## M1 的陶土坩埚没有读数，readings 恒为空。
 
-const SPIRIT_TIER_MID := 30  # no-magic-ok: M1 占位阈值，K5 接入时迁入 constants.perception
-const SPIRIT_TIER_HIGH := 60  # no-magic-ok: 同上
 const STEAM_TIER_OFFSET := 2  # no-magic-ok: 契约 02 §1.8 规定的蒸气档位偏移
+const DEFAULT_SPIRIT_TIER_MID := 4  # no-magic-ok: constants.perception 缺失时的兜底
+const DEFAULT_SPIRIT_TIER_HIGH := 6  # no-magic-ok: 同上
 
 var _db: ContentDatabase
 
@@ -20,9 +20,10 @@ func describe(result: CraftResult, ctx: Dictionary) -> String:
 	if result == null or result.dominant == "":
 		return "一锅没有结合的东西，只有几缕未散的气味。"
 	var dominant_name := _element_name(result.dominant)
-	if spirit_total >= SPIRIT_TIER_HIGH:
+	var tiers := _spirit_tiers()
+	if spirit_total >= tiers.y:
 		return "以%s为主，药性清晰可辨；边缘还有别的味道，但压不住它。" % dominant_name
-	if spirit_total >= SPIRIT_TIER_MID:
+	if spirit_total >= tiers.x:
 		return "能看出以%s为主，还带着一点别的东西。" % dominant_name
 	return "一炉温热的混合物。你隐约觉得它以%s为主。" % dominant_name
 
@@ -68,3 +69,13 @@ func _element_name(element_id: String) -> String:
 		return ""
 	var entry := _db.element(element_id)
 	return str(entry.get("name", element_id))
+
+
+func _spirit_tiers() -> Vector2i:
+	var tiers: Variant = _db.constant("perception.spirit_tiers")
+	if tiers is Dictionary:
+		return Vector2i(
+			int(tiers.get("mid", DEFAULT_SPIRIT_TIER_MID)),
+			int(tiers.get("high", DEFAULT_SPIRIT_TIER_HIGH))
+		)
+	return Vector2i(DEFAULT_SPIRIT_TIER_MID, DEFAULT_SPIRIT_TIER_HIGH)
