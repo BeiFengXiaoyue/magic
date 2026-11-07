@@ -44,7 +44,7 @@ res://
 | M4 完整节奏 | 时间、生存、战斗、存档 | ⬜ 未开始 |
 | M5 可玩性测试 | 找人试玩，验证三个设计假设 | ⬜ 未开始 |
 
-- 自动化检查：**610 项 headless 检查**（含分层依赖、魔法数、内容 schema、场景布局等静态约束）
+- 自动化检查：**612 项 headless 检查**（含分层依赖、魔法数、内容 schema、场景布局等静态约束）
 - 契约：00~05 共 6 份，见 [docs/contracts/README.md](docs/contracts/README.md)；M3 首版草案为 [05 信件与引导](docs/contracts/05-letters-guidance.md)
 - 详细进度与验证记录：[docs/工作进展.md](docs/工作进展.md)
 - 已知未实现：存档与读档（契约 03 已定义）、UI 层自动化测试

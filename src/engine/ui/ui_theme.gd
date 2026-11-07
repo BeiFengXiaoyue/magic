@@ -6,6 +6,7 @@ extends RefCounted
 const FONT_SIZE := 16
 const TITLE_SIZE := 22
 const COLOR_TEXT := Color("#e6dcc8")
+const COLOR_MUTED := Color("#9a8d78")
 const COLOR_ACCENT := Color("#d98c3f")
 const COLOR_BG := Color("#14110f")
 const COLOR_PANEL := Color("#1f1a16")
@@ -51,14 +52,29 @@ static func label(text: String) -> Label:
 	return label
 
 
-static func panel_style() -> StyleBoxFlat:
+static func panel_style() -> StyleBox:
+	var texture := ArtAssets.texture("art_ui_panel_frame")
+	if texture != null:
+		var textured := StyleBoxTexture.new()
+		textured.texture = texture
+		textured.texture_margin_left = 48.0
+		textured.texture_margin_right = 48.0
+		textured.texture_margin_top = 48.0
+		textured.texture_margin_bottom = 48.0
+		textured.content_margin_left = 16.0
+		textured.content_margin_right = 16.0
+		textured.content_margin_top = 12.0
+		textured.content_margin_bottom = 12.0
+		return textured
 	var style := StyleBoxFlat.new()
-	style.bg_color = COLOR_PANEL
-	style.border_color = COLOR_ACCENT
-	style.set_border_width_all(2)
+	style.bg_color = Color("#33281e")
+	style.border_color = Color("#8a6a4a")
+	style.set_border_width_all(3)
 	style.set_corner_radius_all(0)
+	style.shadow_color = Color(0.0, 0.0, 0.0, 0.45)
+	style.shadow_size = 4
 	style.content_margin_left = 16.0
 	style.content_margin_right = 16.0
-	style.content_margin_top = 12.0
-	style.content_margin_bottom = 12.0
+	style.content_margin_top = 10.0
+	style.content_margin_bottom = 10.0
 	return style
