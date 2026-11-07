@@ -18,8 +18,8 @@ jobs:
           unzip -q godot.zip
           chmod +x Godot_v4.7.2-stable_linux.x86_64
 
-      - name: Warm up resource import
-        run: ./Godot_v4.7.2-stable_linux.x86_64 --headless --path . --quit
+      - name: Import resources
+        run: ./Godot_v4.7.2-stable_linux.x86_64 --headless --path . --import
 
       - name: Run headless tests
         run: ./Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script res://tests/run_all.gd
