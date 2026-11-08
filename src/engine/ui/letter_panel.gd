@@ -27,10 +27,14 @@ func setup() -> void:
 
 	var left := VBoxContainer.new()
 	left.custom_minimum_size = Vector2(LIST_WIDTH, 0.0)
-	left.add_child(UiTheme.label("已送达"))
+	var list_title := UiTheme.label("已送达")
+	list_title.add_theme_color_override("font_color", Color("#5c4b3a"))
+	left.add_child(list_title)
 	_list = ItemList.new()
 	_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_list.item_selected.connect(_on_item_selected)
+	_list.add_theme_color_override("font_color", Color("#2a211a"))
+	_list.add_theme_color_override("font_selected_color", Color("#8c3a34"))
 	left.add_child(_list)
 	row.add_child(left)
 
@@ -42,11 +46,12 @@ func setup() -> void:
 	_text.bbcode_enabled = true
 	_text.scroll_active = true
 	_text.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_text.add_theme_color_override("default_color", UiTheme.COLOR_TEXT)
+	_text.add_theme_color_override("default_color", Color("#2a211a"))
 	paper_box.add_child(_text)
 	row.add_child(paper)
 
 	_status_label = UiTheme.label("")
+	_status_label.add_theme_color_override("font_color", Color("#5c4b3a"))
 	add_child(_status_label)
 	var close_button := Button.new()
 	close_button.text = "关闭"

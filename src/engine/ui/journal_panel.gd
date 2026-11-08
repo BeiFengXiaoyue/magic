@@ -94,7 +94,7 @@ func _make_page(title: String) -> RichTextLabel:
 	text.scroll_active = true
 	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	text.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	text.add_theme_color_override("default_color", UiTheme.COLOR_TEXT)
+	text.add_theme_color_override("default_color", Color("#2a211a"))
 	scroll.add_child(text)
 	return text
 

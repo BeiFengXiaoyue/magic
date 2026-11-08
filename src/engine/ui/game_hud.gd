@@ -15,9 +15,7 @@ var _time_label: Label
 var _scene_label: Label
 var _money_label: Label
 var _mail_label: Label
-var _demand_label: Label
 var _hint_label: Label
-var _message_label: Label
 var _hint_panel: HudPanel
 var _hp_bar: ProgressBar
 var _sanity_bar: ProgressBar
@@ -35,7 +33,6 @@ func setup(db: ContentDatabase = null) -> void:
 	_build_bars()
 	_build_bottom()
 	_hint_label.add_theme_color_override("font_color", Color("#8c3a34"))
-	_message_label.add_theme_color_override("font_color", UiTheme.COLOR_TEXT)
 
 
 func configure(db: ContentDatabase) -> void:
@@ -80,17 +77,9 @@ func set_mail(unread: int) -> void:
 	)
 
 
-func set_demand(text: String) -> void:
-	_demand_label.text = text
-
-
 func set_hint(text: String) -> void:
 	_hint_label.text = text
 	_hint_panel.visible = text != ""
-
-
-func set_message(text: String) -> void:
-	_message_label.text = text
 
 
 func _build_top_right() -> void:
@@ -185,16 +174,6 @@ func _bar_column(title: String, color: Color, is_hp: bool) -> VBoxContainer:
 
 
 func _build_bottom() -> void:
-	_message_label = UiTheme.label("")
-	_message_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_message_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	add_child(_message_label)
-	_message_label.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
-	_message_label.offset_left = -320.0
-	_message_label.offset_right = 320.0
-	_message_label.offset_top = -104.0
-	_message_label.offset_bottom = -64.0
-
 	_hint_panel = _panel(0.0, 26)
 	_hint_panel.visible = false
 	add_child(_hint_panel)
@@ -207,16 +186,6 @@ func _build_bottom() -> void:
 	_hint_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	_hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_hint_panel.content.add_child(_hint_label)
-
-	_demand_label = UiTheme.label("")
-	_demand_label.add_theme_font_size_override("font_size", 13)
-	_demand_label.add_theme_color_override("font_color", UiTheme.COLOR_MUTED)
-	add_child(_demand_label)
-	_demand_label.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
-	_demand_label.offset_left = HUD_MARGIN
-	_demand_label.offset_right = HUD_MARGIN + 420.0
-	_demand_label.offset_top = -HUD_MARGIN - 26.0
-	_demand_label.offset_bottom = -HUD_MARGIN
 
 
 func _panel(min_width: float, padding: int = 26) -> HudPanel:

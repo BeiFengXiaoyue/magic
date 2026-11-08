@@ -53,6 +53,21 @@ static func label(text: String) -> Label:
 	return label
 
 
+static func paper_style() -> StyleBoxFlat:
+	var paper := StyleBoxFlat.new()
+	paper.bg_color = Color("#c9bfa8")
+	paper.border_color = Color("#2a211a")
+	paper.set_border_width_all(3)
+	paper.set_corner_radius_all(0)
+	paper.shadow_color = Color(0.0, 0.0, 0.0, 0.5)
+	paper.shadow_size = 6
+	paper.content_margin_left = 24.0
+	paper.content_margin_right = 24.0
+	paper.content_margin_top = 20.0
+	paper.content_margin_bottom = 20.0
+	return paper
+
+
 static func panel_style() -> StyleBox:
 	var texture := ArtAssets.texture("art_ui_panel_frame")
 	if texture != null:

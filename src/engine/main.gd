@@ -48,11 +48,14 @@ var _observation: ObservationPanel
 var _shop: ShopPanel
 var _letter_panel: LetterPanel
 var _journal_panel: JournalPanel
+var _backpack_panel: BackpackPanel
 var _crucible_overlay: CenterContainer
 var _shop_overlay: CenterContainer
 var _letter_overlay: CenterContainer
 var _journal_overlay: CenterContainer
+var _backpack_overlay: CenterContainer
 var _letter_source: String = ""
+var _message_log: Array[String] = []
 
 var _pending_inputs: Dictionary = {}
 var _pending_tier: String = DEFAULT_TIER
@@ -66,7 +69,7 @@ func _ready() -> void:
 	_build_world_ui()
 	_load_content()
 	if _db == null or not _db.errors.is_empty():
-		_hud.set_message("内容载入失败，见控制台。")
+		_notify("内容载入失败，见控制台。")
 		return
 	_hud.configure(_db)
 	_assemble()
@@ -74,7 +77,7 @@ func _ready() -> void:
 	_start_scene()
 	_refresh_all()
 	_letter_use_case.refresh()
-	_hud.set_message("锅是冷的。先看看那只旧木箱。")
+	_notify("锅是冷的。先看看那只旧木箱。")
 
 
 func _process(delta: float) -> void:
@@ -101,7 +104,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		_observation.set_debug(_debug_text())
 	elif key_event.keycode == KEY_B:
 		var enabled := _world.toggle_debug_zones()
-		_hud.set_message("布点模式：%s" % ("开" if enabled else "关"))
+		_notify("布点模式：%s" % ("开" if enabled else "关"))
+	elif key_event.keycode == KEY_I:
+		_open_backpack()
 	elif key_event.keycode == KEY_J:
 		_open_journal("records")
 	elif key_event.keycode == KEY_ESCAPE:
@@ -176,7 +181,7 @@ func _build_panels() -> void:
 	_letter_overlay = _make_overlay()
 	var letter_frame := PanelContainer.new()
 	letter_frame.custom_minimum_size = Vector2(1000.0, 640.0)
-	letter_frame.add_theme_stylebox_override("panel", UiTheme.panel_style())
+	letter_frame.add_theme_stylebox_override("panel", UiTheme.paper_style())
 	_letter_panel = LetterPanel.new()
 	_letter_panel.setup()
 	_letter_panel.letter_selected.connect(_on_letter_selected)
@@ -187,12 +192,22 @@ func _build_panels() -> void:
 	_journal_overlay = _make_overlay()
 	var journal_frame := PanelContainer.new()
 	journal_frame.custom_minimum_size = Vector2(920.0, 640.0)
-	journal_frame.add_theme_stylebox_override("panel", UiTheme.panel_style())
+	journal_frame.add_theme_stylebox_override("panel", UiTheme.paper_style())
 	_journal_panel = JournalPanel.new()
 	_journal_panel.setup()
 	_journal_panel.close_requested.connect(_close_panels)
 	journal_frame.add_child(_journal_panel)
 	_journal_overlay.add_child(journal_frame)
+
+	_backpack_overlay = _make_overlay()
+	var backpack_frame := PanelContainer.new()
+	backpack_frame.custom_minimum_size = Vector2(720.0, 500.0)
+	backpack_frame.add_theme_stylebox_override("panel", UiTheme.paper_style())
+	_backpack_panel = BackpackPanel.new()
+	_backpack_panel.setup()
+	_backpack_panel.close_requested.connect(_close_panels)
+	backpack_frame.add_child(_backpack_panel)
+	_backpack_overlay.add_child(backpack_frame)
 
 
 func _make_overlay() -> CenterContainer:
@@ -331,7 +346,7 @@ func _on_action_requested(action: String, payload: Dictionary) -> void:
 		"journal_open":
 			_open_journal(str(payload.get("page", "records")))
 		_:
-			_hud.set_message("未知操作：%s" % action)
+			_notify("未知操作：%s" % action)
 
 
 func _handle_interact(payload: Dictionary) -> void:
@@ -340,15 +355,15 @@ func _handle_interact(payload: Dictionary) -> void:
 		return
 	var result := _interact.handle(target_id)
 	if result.has("success"):
-		_hud.set_message(_gather_text(result))
+		_notify(_gather_text(result))
 	elif str(result.get("kind", "")) == "message":
-		_hud.set_message(str(result.get("message", "")))
+		_notify(str(result.get("message", "")))
 
 
 func _gather_and_report(node_id: String) -> void:
 	if _gather == null:
 		return
-	_hud.set_message(_gather_text(_gather.gather(node_id)))
+	_notify(_gather_text(_gather.gather(node_id)))
 
 
 func _gather_text(result: Dictionary) -> String:
@@ -421,6 +436,8 @@ func _close_panels() -> void:
 		_letter_overlay.visible = false
 	if _journal_overlay != null:
 		_journal_overlay.visible = false
+	if _backpack_overlay != null:
+		_backpack_overlay.visible = false
 	if _world != null:
 		_world.set_input_enabled(true)
 
@@ -472,6 +489,63 @@ func _refresh_journal() -> void:
 	_journal_panel.refresh_recipes(recipes_view.get("recipes", []))
 	_journal_panel.refresh_records(_letter_use_case.journal_view("records"))
 
+func _open_backpack() -> void:
+	if _backpack_panel == null:
+		return
+	_backpack_overlay.visible = true
+	_crucible_overlay.visible = false
+	_shop_overlay.visible = false
+	_letter_overlay.visible = false
+	_journal_overlay.visible = false
+	_world.set_input_enabled(false)
+	_refresh_backpack()
+
+
+func _refresh_backpack() -> void:
+	if _backpack_panel == null:
+		return
+	var material_lines: Array[String] = []
+	for material_id in _inventory.materials:
+		var count := int(_inventory.materials[material_id])
+		if count <= 0:
+			continue
+		material_lines.append("%s ×%d" % [
+			str(_db.material(str(material_id)).get("name", material_id)),
+			count,
+		])
+	var product_lines: Array[String] = []
+	for index in _inventory.products.size():
+		var product := _inventory.product_at(index)
+		if product == null:
+			continue
+		var display := product.display_name()
+		if product.recipe_id != "":
+			display = str(_db.recipe(product.recipe_id).get("name", display))
+		var quote := _sell.quote(index)
+		var price_text := ("%d 金币" % int(quote.get("price", 0))) if bool(quote.get("can_sell", false)) else "卖不掉"
+		product_lines.append("%s · 覆盖率 %.2f · %s" % [
+			display,
+			float(quote.get("coverage", 0.0)),
+			price_text,
+		])
+	_backpack_panel.refresh({
+		"gold": _wallet.gold,
+		"demand": _demand_text(),
+		"materials": material_lines,
+		"products": product_lines,
+		"messages": _message_log.duplicate(),
+	})
+
+
+func _notify(text: String) -> void:
+	if text == "":
+		return
+	_message_log.append(text)
+	while _message_log.size() > 10:
+		_message_log.pop_front()
+	if _backpack_overlay != null and _backpack_overlay.visible:
+		_refresh_backpack()
+
 
 func _on_day_passed(day: int, season: int, year: int) -> void:
 	if _day_use_case == null:
@@ -510,7 +584,7 @@ func _add_material(payload: Dictionary) -> void:
 	var current := int(_pending_inputs.get(mat_id, 0))
 	var available := _inventory.count_material(mat_id) - current
 	if available <= 0:
-		_hud.set_message("库存不足。")
+		_notify("库存不足。")
 		return
 	_pending_inputs[mat_id] = current + mini(count, available)
 	_refresh_pending()
@@ -547,15 +621,15 @@ func _start() -> void:
 	if _active:
 		return
 	if _pending_inputs.is_empty():
-		_hud.set_message("先投料。")
+		_notify("先投料。")
 		return
 	var session_id := _use_case.begin(_pending_inputs, _pending_tier)
 	if session_id == "":
-		_hud.set_message("材料不足，或上一炉还没取出。")
+		_notify("材料不足，或上一炉还没取出。")
 		return
 	_pending_inputs.clear()
 	_crucible.set_status("炼制中……")
-	_hud.set_message("炼制中……")
+	_notify("炼制中……")
 	_refresh_pending()
 
 
@@ -564,11 +638,11 @@ func _take_out() -> void:
 		return
 	var result := _use_case.take_out()
 	if result == null:
-		_hud.set_message("还没到平衡，再等等。")
+		_notify("还没到平衡，再等等。")
 		return
 	_observation.set_observation(_perception.describe(result, { "spirit_total": 0 }))
 	_crucible.set_status("取出成功。")
-	_hud.set_message("取出成功。去小店的柜台卖卖看。")
+	_notify("取出成功。去小店的柜台卖卖看。")
 
 
 func _on_state_changed(scope: String, payload: Dictionary) -> void:
@@ -577,10 +651,14 @@ func _on_state_changed(scope: String, payload: Dictionary) -> void:
 			_shelf.refresh(_inventory, _active)
 			if _shop_overlay != null and _shop_overlay.visible:
 				_refresh_shop()
+			if _backpack_overlay != null and _backpack_overlay.visible:
+				_refresh_backpack()
 		"player":
 			_hud.set_player(int(payload.get("hp", 0)), int(payload.get("sanity", 0)))
 		"money":
 			_hud.set_money(int(payload.get("gold", 0)))
+			if _backpack_overlay != null and _backpack_overlay.visible:
+				_refresh_backpack()
 		"letters":
 			_hud.set_mail(int(payload.get("unread", 0)))
 		"knowledge", "journal":
@@ -620,7 +698,7 @@ func _on_cue_requested(cue: String, params: Dictionary) -> void:
 		"scene":
 			_change_scene(str(params.get("scene_id", "")))
 		"mail_arrived":
-			_hud.set_message("门口有新的信。")
+			_notify("门口有新的信。")
 
 
 func _refresh_all() -> void:
@@ -633,7 +711,6 @@ func _refresh_all() -> void:
 	_hud.set_player(_character.hp, _character.sanity)
 	_hud.set_money(_wallet.gold)
 	_hud.set_mail(_letters.unread_ids().size() if _letters != null else 0)
-	_hud.set_demand(_demand_text())
 
 
 func _refresh_wild_view(scene_id: String) -> void:
