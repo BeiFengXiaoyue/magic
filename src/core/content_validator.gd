@@ -12,7 +12,7 @@ const MAX_FLUCTUATION := 0.5  # no-magic-ok: 契约 00 §7.2 fluctuation 上限
 const MAX_TIER := 4  # no-magic-ok: 契约 tier 1~4
 const MAX_GATHER_TIER := 3  # no-magic-ok: 采集阶只有 1~3（数值表 §5.4）
 const MIN_POLYGON_POINTS := 3  # no-magic-ok: 多边形至少三个点
-const SCENES: Array[String] = ["scene_workshop", "scene_shop", "scene_forest"]
+const SCENES: Array[String] = ["scene_workshop", "scene_shop", "scene_forest", "scene_attic"]
 const VALID_SCENERY_KINDS: Array[String] = ["tree", "rock", "bush"]
 
 var errors: Array[String] = []
@@ -22,6 +22,7 @@ var recipes: Dictionary = {}
 var items: Dictionary = {}
 var nodes: Dictionary = {}
 var letters: Dictionary = {}
+var containers: Dictionary = {}
 var forest: Dictionary = {}
 var constants: Dictionary = {}
 var element_order: Dictionary = {}
@@ -42,7 +43,8 @@ func validate(
 	nodes_doc: Variant,
 	forest_doc: Variant,
 	constants_doc: Variant,
-	letters_doc: Variant = null
+	letters_doc: Variant = null,
+	containers_doc: Variant = null
 ) -> Array[String]:
 	_reset()
 	_index(elements_doc, "elements.json", elements, element_order)
@@ -51,6 +53,7 @@ func validate(
 	_index(items_doc, "items.json", items, {})
 	_index(nodes_doc, "nodes.json", nodes, {})
 	_index(letters_doc, "letters.json", letters, {})
+	_index(containers_doc, "containers.json", containers, {})
 	if forest_doc is Dictionary:
 		forest = forest_doc
 	if constants_doc is Dictionary:
@@ -63,6 +66,7 @@ func validate(
 	_validate_nodes()
 	_validate_forest()
 	_validate_letters()
+	_validate_containers()
 	return errors
 
 
@@ -74,6 +78,7 @@ func _reset() -> void:
 	items.clear()
 	nodes.clear()
 	letters.clear()
+	containers.clear()
 	forest.clear()
 	constants.clear()
 	element_order.clear()
@@ -735,15 +740,55 @@ func _validate_letters() -> void:
 			error("letters.json: %s 的 title 为空" % letter_id)
 		if str(entry.get("body", "")).strip_edges() == "":
 			error("letters.json: %s 的 body 为空" % letter_id)
-		for forbidden in ["deep", "puzzle", "shallow"]:
+		for forbidden in ["deep", "shallow"]:
 			if entry.has(forbidden):
-				error("letters.json: %s 出现 %s；M3 不实现解密" % [letter_id, str(forbidden)])
+				error("letters.json: %s 出现 %s；M3 不实现深层解密" % [letter_id, str(forbidden)])
 		_validate_letter_arrival(letter_id, entry.get("arrival", null))
+		_validate_letter_reply(letter_id, entry.get("reply", null))
+		_validate_letter_puzzle(letter_id, entry.get("puzzle", null), concepts)
 		_validate_letter_unlocks(letter_id, entry.get("unlocks", null), concepts)
 		_validate_letter_spirituality(letter_id, entry.get("spirituality", null), sources)
 		if letter_id == "ltr_L01" and not _letter_after_targets(entry).is_empty():
 			error("letters.json: ltr_L01 不允许 after_letter 条件")
 	_check_letter_cycles()
+
+
+func _validate_containers() -> void:
+	if containers.is_empty():
+		error("containers.json: 未载入")
+		return
+	for id in containers:
+		var entry: Dictionary = containers[id]
+		var container_id := str(id)
+		if str(entry.get("name", "")).strip_edges() == "":
+			error("containers.json: %s 的 name 为空" % container_id)
+		var layers: Variant = entry.get("layers", null)
+		if not layers is Array or layers.is_empty():
+			error("containers.json: %s 缺少 layers 数组" % container_id)
+			continue
+		var expected := 1
+		for layer in layers:
+			if not layer is Dictionary:
+				error("containers.json: %s 的 layers[%d] 不是对象" % [container_id, expected - 1])
+				expected += 1
+				continue
+			var index := int(layer.get("index", 0))
+			if index != expected:
+				error("containers.json: %s 的层号应为 %d，实际 %d" % [container_id, expected, index])
+			expected += 1
+			if str(layer.get("label", "")).strip_edges() == "":
+				error("containers.json: %s 第 %d 层缺少 label" % [container_id, index])
+			var letter_id := str(layer.get("letter", ""))
+			if letter_id != "" and not letters.has(letter_id):
+				error("containers.json: %s 第 %d 层引用不存在的信 %s" % [container_id, index, letter_id])
+			var hint: Variant = layer.get("hint", null)
+			if hint != null and not hint is String:
+				error("containers.json: %s 第 %d 层的 hint 应为字符串" % [container_id, index])
+			var conditions: Variant = layer.get("conditions", null)
+			if conditions != null:
+				_conditions_document("containers.json", "%s 第 %d 层" % [container_id, index], conditions)
+			elif letter_id == "":
+				error("containers.json: %s 第 %d 层既无 letter 也无 conditions" % [container_id, index])
 
 
 func _validate_letter_arrival(letter_id: String, arrival: Variant) -> void:
@@ -774,35 +819,109 @@ func _validate_letter_arrival(letter_id: String, arrival: Variant) -> void:
 
 
 func _validate_letter_condition(letter_id: String, condition: Variant) -> void:
+	_validate_condition("letters.json", letter_id, condition)
+
+
+func _validate_condition(label: String, owner_id: String, condition: Variant) -> void:
 	if not condition is Dictionary:
-		error("letters.json: %s 的条件不是对象" % letter_id)
+		error("%s: %s 的条件不是对象" % [label, owner_id])
 		return
 	var condition_type := str(condition.get("type", ""))
 	match condition_type:
 		"day":
 			if not _is_number(condition.get("min", null)) or int(condition["min"]) < 1:
-				error("letters.json: %s 的 day.min 应为 ≥1 的整数" % letter_id)
+				error("%s: %s 的 day.min 应为 ≥1 的整数" % [label, owner_id])
 		"after_letter":
 			if not letters.has(str(condition.get("id", ""))):
-				error("letters.json: %s 的 after_letter 指向不存在的信" % letter_id)
+				error("%s: %s 的 after_letter 指向不存在的信" % [label, owner_id])
 		"flag":
 			if not str(condition.get("id", "")).begins_with("flg_"):
-				error("letters.json: %s 的 flag 条件需要 flg_ 前缀" % letter_id)
+				error("%s: %s 的 flag 条件需要 flg_ 前缀" % [label, owner_id])
 		"knowledge":
 			var kind := str(condition.get("kind", ""))
 			var target_id := str(condition.get("id", ""))
 			if kind == "recipe" and not recipes.has(target_id):
-				error("letters.json: %s 的知识条件引用不存在配方 %s" % [letter_id, target_id])
+				error("%s: %s 的知识条件引用不存在配方 %s" % [label, owner_id, target_id])
 			elif kind == "location" and not nodes.has(target_id):
-				error("letters.json: %s 的知识条件引用不存在地点 %s" % [letter_id, target_id])
+				error("%s: %s 的知识条件引用不存在地点 %s" % [label, owner_id, target_id])
 			elif kind == "concept":
 				var concepts: Variant = constants.get("concepts", null)
 				if not concepts is Dictionary or not concepts.has(target_id):
-					error("letters.json: %s 的知识条件引用不存在概念 %s" % [letter_id, target_id])
+					error("%s: %s 的知识条件引用不存在概念 %s" % [label, owner_id, target_id])
 			elif kind != "blueprint":
-				error("letters.json: %s 的知识条件 kind 无效" % letter_id)
+				error("%s: %s 的知识条件 kind 无效" % [label, owner_id])
 		_:
-			error("letters.json: %s 的条件 type 无效" % letter_id)
+			error("%s: %s 的条件 type 无效" % [label, owner_id])
+
+
+func _conditions_document(label: String, owner_id: String, conditions: Variant) -> bool:
+	if not conditions is Dictionary:
+		error("%s: %s 缺少 conditions" % [label, owner_id])
+		return false
+	var has_all: bool = conditions.has("all")
+	var has_any: bool = conditions.has("any")
+	if has_all == has_any:
+		error("%s: %s 的 conditions 必须恰有 all 或 any 之一" % [label, owner_id])
+		return false
+	var list: Variant = conditions.get("all", conditions.get("any", null))
+	if not list is Array or list.is_empty():
+		error("%s: %s 的 conditions 数组为空" % [label, owner_id])
+		return false
+	for condition in list:
+		_validate_condition(label, owner_id, condition)
+	return true
+
+
+func _validate_letter_reply(letter_id: String, reply: Variant) -> void:
+	if reply == null:
+		return
+	if not reply is Dictionary:
+		error("letters.json: %s 的 reply 不是对象" % letter_id)
+		return
+	if str(reply.get("prompt", "")).strip_edges() == "":
+		error("letters.json: %s 的 reply.prompt 为空" % letter_id)
+	var options: Variant = reply.get("options", null)
+	if not options is Array or options.is_empty():
+		error("letters.json: %s 的 reply.options 应为非空数组" % letter_id)
+		return
+	var seen: Dictionary = {}
+	for option in options:
+		if not option is Dictionary:
+			error("letters.json: %s 的 reply 选项不是对象" % letter_id)
+			continue
+		var option_id := str(option.get("id", ""))
+		if option_id == "":
+			error("letters.json: %s 的 reply 选项缺少 id" % letter_id)
+		elif seen.has(option_id):
+			error("letters.json: %s 的 reply 选项 id 重复: %s" % [letter_id, option_id])
+		else:
+			seen[option_id] = true
+		if str(option.get("text", "")).strip_edges() == "":
+			error("letters.json: %s 的 reply 选项 %s 缺少 text" % [letter_id, option_id])
+		var flags: Variant = option.get("flags", [])
+		if not flags is Array:
+			error("letters.json: %s 的 reply 选项 %s 的 flags 应为数组" % [letter_id, option_id])
+			continue
+		for flag in flags:
+			if not flag is String or not str(flag).begins_with("flg_"):
+				error("letters.json: %s 的 reply 选项 %s 的旗标需要 flg_ 前缀" % [letter_id, option_id])
+
+
+func _validate_letter_puzzle(letter_id: String, puzzle: Variant, concepts: Dictionary) -> void:
+	if puzzle == null:
+		return
+	if not puzzle is Dictionary:
+		error("letters.json: %s 的 puzzle 不是对象" % letter_id)
+		return
+	if str(puzzle.get("prompt", "")).strip_edges() == "":
+		error("letters.json: %s 的 puzzle.prompt 为空" % letter_id)
+	var answer := str(puzzle.get("answer", ""))
+	if not concepts.has(answer):
+		error("letters.json: %s 的 puzzle.answer 不是已存在概念: %s" % [letter_id, answer])
+	var hint: Variant = puzzle.get("hint", null)
+	if hint != null and not hint is String:
+		error("letters.json: %s 的 puzzle.hint 应为字符串" % letter_id)
+	_validate_letter_unlocks(letter_id, puzzle.get("reward", null), concepts)
 
 
 func _validate_letter_unlocks(letter_id: String, unlocks: Variant, concepts: Dictionary) -> void:

@@ -9,6 +9,10 @@ var status: String = "pending"
 var delivered_day: int = 0
 var read_day: int = 0
 var awards: Dictionary = {"read": false}
+var reply_id: String = ""
+var reply_day: int = 0
+var puzzle_attempts: int = 0
+var puzzle_solved: bool = false
 
 
 func _init(letter_id: String = "") -> void:
@@ -25,6 +29,10 @@ func snapshot() -> Dictionary:
 		"delivered_day": delivered_day,
 		"read_day": read_day,
 		"awards": awards.duplicate(true),
+		"reply_id": reply_id,
+		"reply_day": reply_day,
+		"puzzle_attempts": puzzle_attempts,
+		"puzzle_solved": puzzle_solved,
 	}
 
 
@@ -32,6 +40,10 @@ func restore(data: Dictionary) -> void:
 	status = str(data.get("status", "pending"))
 	delivered_day = int(data.get("delivered_day", 0))
 	read_day = int(data.get("read_day", 0))
+	reply_id = str(data.get("reply_id", ""))
+	reply_day = int(data.get("reply_day", 0))
+	puzzle_attempts = int(data.get("puzzle_attempts", 0))
+	puzzle_solved = bool(data.get("puzzle_solved", false))
 	var raw_awards: Variant = data.get("awards", null)
 	if raw_awards is Dictionary:
 		awards = raw_awards.duplicate(true)

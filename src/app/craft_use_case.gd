@@ -11,6 +11,7 @@ var _process: CraftProcess
 var _publisher: CraftEventPublisher
 var _journal: Journal = null
 var _spirituality: Spirituality = null
+var _devices: DeviceState = null
 var _session: CraftSession = null
 var _session_counter: int = 0
 
@@ -22,7 +23,8 @@ func _init(
 	process: CraftProcess,
 	publisher: CraftEventPublisher = null,
 	journal: Journal = null,
-	spirituality: Spirituality = null
+	spirituality: Spirituality = null,
+	devices: DeviceState = null
 ) -> void:
 	_db = db
 	_clock = clock
@@ -31,6 +33,13 @@ func _init(
 	_publisher = publisher
 	_journal = journal
 	_spirituality = spirituality
+	_devices = devices
+	_sync_device()
+
+
+func _sync_device() -> void:
+	if _devices != null and _devices.current_id() != "":
+		_process.set_device(_devices.current_id())
 
 
 func begin(inputs: Dictionary, tier_id: String) -> String:
@@ -100,7 +109,8 @@ func take_out() -> CraftResult:
 			"inputs": session.inputs.duplicate(),
 			"tier_id": session.tier_id,
 			"duration_minutes": session.duration_minutes,
-			"device_id": str(_db.constant("device.default_id")),
+			"device_id": session.device_id,
+			"pressure_atm": session.pressure_atm,
 			"spirit_total": _spirituality.total() if _spirituality != null else 0,
 			"day": _clock.today(),
 			"minute_of_day": _clock.minute_of_day,

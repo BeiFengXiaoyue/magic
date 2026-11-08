@@ -12,6 +12,14 @@ const PROGRESS_MAX := 100.0
 const BUBBLE_MIN_WIDTH := 480.0
 const BUBBLE_MIN_HEIGHT := 260.0
 const SEPARATION := 8
+const TIER_ICONS := {
+	"t_ice_bath": "art_ui_flame_ice",
+	"t_cold_soak": "art_ui_flame_cold",
+	"t_low_flame": "art_ui_flame_low",
+	"t_mid_flame": "art_ui_flame_mid",
+	"t_high_flame": "art_ui_flame_high",
+	"t_raging_flame": "art_ui_flame_raging",
+}
 
 var _db: ContentDatabase
 var _tier_buttons: Dictionary = {}
@@ -42,8 +50,15 @@ func setup(db: ContentDatabase, default_tier: String) -> void:
 			var tier_id := str(tier.get("id", ""))
 			var button := Button.new()
 			button.text = str(tier.get("name", tier_id))
+			button.custom_minimum_size = Vector2(0.0, 36.0)
+			UiTheme.style_button(button)
 			button.toggle_mode = true
 			button.button_group = group
+			var icon := ArtAssets.texture(str(TIER_ICONS.get(tier_id, "")))
+			if icon != null:
+				button.icon = icon
+				button.expand_icon = true
+				button.add_theme_constant_override("icon_max_width", 20)
 			button.pressed.connect(_on_tier_pressed.bind(tier_id))
 			tier_row.add_child(button)
 			_tier_buttons[tier_id] = button
@@ -60,21 +75,51 @@ func setup(db: ContentDatabase, default_tier: String) -> void:
 
 	var action_row := HBoxContainer.new()
 	action_row.add_theme_constant_override("separation", SEPARATION)
-	add_child(action_row)
 	_start_button = Button.new()
 	_start_button.text = "点火"
+	UiTheme.style_button(_start_button)
 	_start_button.disabled = true
+	var fire_icon := ArtAssets.texture("art_ui_icon_fire")
+	if fire_icon != null:
+		_start_button.icon = fire_icon
+		_start_button.expand_icon = true
+		_start_button.add_theme_constant_override("icon_max_width", 24)
 	_start_button.pressed.connect(_on_start_pressed)
 	action_row.add_child(_start_button)
 	_take_button = Button.new()
 	_take_button.text = "取出"
+	UiTheme.style_button(_take_button)
 	_take_button.disabled = true
+	var ladle_icon := ArtAssets.texture("art_ui_icon_ladle")
+	if ladle_icon != null:
+		_take_button.icon = ladle_icon
+		_take_button.expand_icon = true
+		_take_button.add_theme_constant_override("icon_max_width", 24)
 	_take_button.pressed.connect(_on_take_out_pressed)
 	action_row.add_child(_take_button)
 
+	var action_panel := PanelContainer.new()
+	action_panel.add_theme_stylebox_override("panel", _action_style())
+	var action_box := VBoxContainer.new()
+	action_box.add_theme_constant_override("separation", 4)
+	action_box.add_child(action_row)
 	_status_label = UiTheme.label("")
-	add_child(_status_label)
+	action_box.add_child(_status_label)
+	action_panel.add_child(action_box)
+	add_child(action_panel)
 	select_tier(default_tier)
+
+
+func _action_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.10, 0.08, 0.06, 0.82)
+	style.border_color = Color("#6b5a44")
+	style.set_border_width_all(2)
+	style.content_margin_left = 10.0
+	style.content_margin_right = 10.0
+	style.content_margin_top = 6.0
+	style.content_margin_bottom = 6.0
+	return style
 
 
 func select_tier(tier_id: String) -> void:

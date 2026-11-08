@@ -52,6 +52,28 @@ func open(id: String) -> Dictionary:
 	return result
 
 
+func reply(letter_id: String, option_id: String) -> Dictionary:
+	var result := _letters.reply(letter_id, option_id)
+	if bool(result.get("ok", false)):
+		if _publisher != null:
+			_publisher.publish_letter(_letters.state(letter_id))
+		result["view"] = letter_view(letter_id)
+	_publish_letters_state()
+	return result
+
+
+func answer(letter_id: String, concept_id: String) -> Dictionary:
+	var result := _letters.answer(letter_id, concept_id)
+	if bool(result.get("ok", false)):
+		if _publisher != null:
+			_publisher.publish_letter(_letters.state(letter_id))
+			_publisher.publish_knowledge(_knowledge)
+			_publisher.publish_journal(_journal)
+		result["view"] = letter_view(letter_id)
+	_publish_letters_state()
+	return result
+
+
 func list_view(source: String = "") -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for id in _letters.delivered_ids():
@@ -87,8 +109,10 @@ func letter_view(id: String) -> Dictionary:
 		author_name = str(author.get("name", ""))
 	var arrival: Variant = entry_data.get("arrival", {})
 	var delivery := ""
+	var carrier := ""
 	if arrival is Dictionary:
 		delivery = str(arrival.get("delivery", ""))
+		carrier = str(arrival.get("carrier", ""))
 
 	var unlocked_recipes: Array[Dictionary] = []
 	var unlocked_concepts: Array[Dictionary] = []
@@ -122,6 +146,7 @@ func letter_view(id: String) -> Dictionary:
 		"author_name": author_name,
 		"body": str(entry_data.get("body", "")),
 		"delivery": delivery,
+		"carrier": carrier,
 		"status": letter_state.status,
 		"delivered_day": letter_state.delivered_day,
 		"read_day": letter_state.read_day,
@@ -129,7 +154,68 @@ func letter_view(id: String) -> Dictionary:
 		"unlocked_concepts": unlocked_concepts,
 		"unlocked_locations": unlocked_locations,
 		"notes": notes,
+		"reply": _reply_view(entry_data, letter_state),
+		"puzzle": _puzzle_view(entry_data, letter_state),
 	}
+
+
+func _puzzle_view(entry_data: Dictionary, letter_state: LetterState) -> Dictionary:
+	var puzzle: Variant = entry_data.get("puzzle", null)
+	if not puzzle is Dictionary:
+		return {}
+	var wordbank: Array[Dictionary] = []
+	var all_concepts: Variant = _db.constant("concepts")
+	if all_concepts is Dictionary:
+		for concept_id in all_concepts:
+			wordbank.append({
+				"id": str(concept_id),
+				"name": str(all_concepts[concept_id]),
+			})
+	var hint := ""
+	if letter_state.puzzle_attempts >= int(_db.constant("letter_interaction.puzzle_hint_wrong_count")):
+		hint = str(puzzle.get("hint", ""))
+	return {
+		"prompt": str(puzzle.get("prompt", "")),
+		"answer_label": _concept_name(str(puzzle.get("answer", ""))),
+		"solved": letter_state.puzzle_solved,
+		"attempts": letter_state.puzzle_attempts,
+		"hint": hint,
+		"wordbank": wordbank,
+	}
+
+
+func _reply_view(entry_data: Dictionary, letter_state: LetterState) -> Dictionary:
+	var reply_data: Variant = entry_data.get("reply", null)
+	if not reply_data is Dictionary:
+		return {}
+	var options_view: Array[Dictionary] = []
+	var options: Variant = reply_data.get("options", [])
+	if options is Array:
+		for option in options:
+			if option is Dictionary:
+				options_view.append({
+					"id": str(option.get("id", "")),
+					"text": str(option.get("text", "")),
+				})
+	return {
+		"prompt": str(reply_data.get("prompt", "回信")),
+		"options": options_view,
+		"replied": letter_state.reply_id != "",
+		"reply_id": letter_state.reply_id,
+		"reply_text": _reply_text(reply_data, letter_state.reply_id),
+	}
+
+
+func _reply_text(reply_data: Dictionary, reply_id: String) -> String:
+	if reply_id == "":
+		return ""
+	var options: Variant = reply_data.get("options", [])
+	if not options is Array:
+		return ""
+	for option in options:
+		if option is Dictionary and str(option.get("id", "")) == reply_id:
+			return str(option.get("text", ""))
+	return ""
 
 
 func journal_view(page: String) -> Dictionary:

@@ -12,6 +12,7 @@ extends RefCounted
 const WORKSHOP := "scene_workshop"
 const SHOP := "scene_shop"
 const FOREST := "scene_forest"
+const ATTIC := "scene_attic"
 
 const INDOOR_SIZE := Vector2(1280.0, 720.0)
 const FOREST_SIZE := Vector2(3200.0, 2400.0)
@@ -23,13 +24,17 @@ const FOREST_MARGIN := 64.0
 const HERO_CLEARANCE := 120.0
 const WORKSHOP_FLOOR := Rect2(200.0, 245.0, 870.0, 311.0)
 const SHOP_FLOOR := Rect2(190.0, 220.0, 910.0, 392.0)
+const ATTIC_FLOOR := Rect2(240.0, 250.0, 800.0, 300.0)
 
-## 门都嵌在墙上，各占一面：工坊上墙右侧门洞去小店，底墙门洞去森林；
-## 小店左墙门回工坊。坐标对齐烘焙背景里的门洞 / 门板。
+## 门都嵌在墙上，各占一面：工坊上墙右侧门洞去小店，底墙门洞去森林，
+## 右墙梯子上阁楼；小店左墙门回工坊。坐标对齐烘焙背景里的门洞 / 门板。
 const WORKSHOP_DOOR_SHOP := Vector2(900.0, 180.0)
 const WORKSHOP_DOOR_FOREST := Vector2(651.0, 600.0)
+const WORKSHOP_DOOR_ATTIC := Vector2(780.0, 190.0)
 const SHOP_DOOR_WORKSHOP := Vector2(170.0, 450.0)
 const FOREST_DOOR_POS := Vector2(640.0, 600.0)
+const ATTIC_BOX_POS := Vector2(480.0, 420.0)
+const ATTIC_DOOR_POS := Vector2(640.0, 190.0)
 const DOOR_INTERACT_SIZE := Vector2(110.0, 100.0)
 const WALL_DOOR_INTERACT_SIZE := Vector2(120.0, 240.0)
 const DOOR_ART_SIZE := 130.0
@@ -54,6 +59,8 @@ static func background_art_id(scene_id: String) -> String:
 		return "art_scene_workshop"
 	if scene_id == SHOP:
 		return "art_scene_shop"
+	if scene_id == ATTIC:
+		return "art_scene_attic"
 	return ""
 
 
@@ -73,6 +80,8 @@ static func walkable_rect(scene_id: String) -> Rect2:
 		)
 	if scene_id == SHOP:
 		return SHOP_FLOOR
+	if scene_id == ATTIC:
+		return ATTIC_FLOOR
 	return WORKSHOP_FLOOR
 
 
@@ -87,6 +96,8 @@ static func spawn(scene_id: String) -> Vector2:
 		return Vector2(320.0, 520.0)
 	if scene_id == FOREST:
 		return Vector2(760.0, 720.0)
+	if scene_id == ATTIC:
+		return Vector2(920.0, 420.0)
 	return Vector2(640.0, 520.0)
 
 
@@ -97,6 +108,8 @@ static func color(scene_id: String) -> Color:
 		return Color("#241f1c")
 	if scene_id == FOREST:
 		return Color("#1b2a1d")
+	if scene_id == ATTIC:
+		return Color("#221c17")
 	return Color("#1a1714")
 
 
@@ -122,12 +135,21 @@ static func interactables(scene_id: String) -> Array[Dictionary]:
 			"art_prop_door_wood", DOOR_ART_SIZE, DOOR_INTERACT_SIZE
 		))
 		out.append(_item(
-			"attic_box", Vector2(980.0, 450.0), "旧木箱", "attic_box",
-			"", 0.0, Vector2(90.0, 90.0), Rect2(940.0, 415.0, 80.0, 70.0)
+			"door_attic", WORKSHOP_DOOR_ATTIC, "上阁楼", "ladder",
+			"art_prop_ladder", 160.0, Vector2(90.0, 90.0)
 		))
 		out.append(_item(
 			"mail_tray", Vector2(760.0, 600.0), "信盘", "mail_tray",
 			"", 0.0, Vector2(80.0, 80.0)
+		))
+	elif scene_id == ATTIC:
+		out.append(_item(
+			"attic_box", ATTIC_BOX_POS, "旧木箱", "attic_box",
+			"", 0.0, Vector2(100.0, 100.0), Rect2(440.0, 385.0, 80.0, 70.0)
+		))
+		out.append(_item(
+			"door_workshop", ATTIC_DOOR_POS, "下楼", "ladder",
+			"art_prop_ladder", 160.0, DOOR_INTERACT_SIZE
 		))
 	elif scene_id == SHOP:
 		out.append(_item(

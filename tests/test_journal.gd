@@ -36,6 +36,13 @@ func run(ctx: TestContext) -> void:
 	var columns: Dictionary = second.get("columns", {})
 	ctx.check_eq(columns.get("pressure", "missing"), null, "压力列恒为 null")
 	ctx.check(str(columns.get("conditions", "")).contains("陶土坩埚"), "条件列含设备")
+	var pressured_context := craft_context.duplicate()
+	pressured_context["device_id"] = "dev_pressure_vessel"
+	pressured_context["pressure_atm"] = 2.0
+	var third := journal.add_craft_entry(result, pressured_context)
+	var pressured_columns: Dictionary = third.get("columns", {})
+	ctx.check_eq(str(pressured_columns.get("pressure", "")), "2.0 atm", "装加压装置后压力列有值")
+	ctx.check(str(pressured_columns.get("conditions", "")).contains("黄铜加压器"), "条件列含加压器")
 	ctx.check_eq(str(journal.records_view()[0].get("format", "")), "prose", "旧条目格式不变")
 
 	journal.add_note("南坡湿地：清露草（野生）", "ltr_L03")
@@ -51,5 +58,5 @@ func run(ctx: TestContext) -> void:
 	var snapshot := journal.snapshot()
 	var restored := Journal.new(db, knowledge, Perception.new(db))
 	restored.restore(snapshot)
-	ctx.check_eq(restored.records_view().size(), 2, "手记快照恢复条目")
+	ctx.check_eq(restored.records_view().size(), 3, "手记快照恢复条目")
 	ctx.check_eq(str(restored.records_view()[0].get("format", "")), "prose", "恢复后旧格式不变")

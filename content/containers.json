@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "entries": [
+    {
+      "id": "attic_box",
+      "name": "旧木箱",
+      "layers": [
+        {
+          "index": 1,
+          "label": "上层",
+          "letter": "ltr_L01",
+          "conditions": {
+            "all": [
+              {
+                "type": "day",
+                "min": 1
+              }
+            ]
+          }
+        },
+        {
+          "index": 2,
+          "label": "中层",
+          "conditions": {
+            "all": [
+              {
+                "type": "knowledge",
+                "kind": "concept",
+                "id": "cpt_huohou"
+              }
+            ]
+          },
+          "hint": "还不到时候。先把火候弄明白。"
+        },
+        {
+          "index": 3,
+          "label": "底层",
+          "conditions": {
+            "all": [
+              {
+                "type": "knowledge",
+                "kind": "concept",
+                "id": "cpt_kongzhi_bianliang"
+              }
+            ]
+          },
+          "hint": "等你分得清“想要”和“需要”再来。"
+        }
+      ]
+    }
+  ]
+}

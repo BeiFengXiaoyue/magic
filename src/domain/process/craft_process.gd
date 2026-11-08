@@ -52,8 +52,23 @@ func start(inputs: Dictionary, conditions: Dictionary) -> CraftSession:
 	session.temperature_c = temperature
 	session.duration_minutes = duration
 	session.element_pool = pool.duplicate()
+	session.device_id = _device_id
+	var device_entry: Variant = _device.get(_device_id, null)
+	if device_entry is Dictionary:
+		session.pressure_atm = float(device_entry.get("pressure_atm", 0.0))
 	session.result = _solver.solve(pool, { "temperature_c": temperature })
 	return session
+
+
+func set_device(device_id: String) -> bool:
+	if not _device.has(device_id):
+		return false
+	_device_id = device_id
+	return true
+
+
+func device_id() -> String:
+	return _device_id
 
 
 func tick(session: CraftSession, game_minutes: int) -> void:

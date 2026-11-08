@@ -65,5 +65,9 @@ func run(ctx: TestContext) -> void:
 
 	use_case.refresh()
 	use_case.open("ltr_L05")
-	ctx.check(flags.has("flg_pressure_clue"), "L05 给出加压线索")
+	ctx.check(not flags.has("flg_pressure_clue"), "L05 未答谜语前不给线索")
+	var answer := use_case.answer("ltr_L05", "cpt_yali")
+	ctx.check(bool(answer.get("solved", false)), "答对 L05 谜语")
+	ctx.check(flags.has("flg_pressure_clue"), "答对后给出加压线索")
+	ctx.check(knowledge.has("concept", "cpt_kongzhi_li"), "答对后解锁控制力")
 	ctx.check_eq(spirit.t, 8, "四封神秘信共 T+8")

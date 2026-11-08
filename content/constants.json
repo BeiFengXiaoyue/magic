@@ -6,7 +6,20 @@
       "name": "陶土坩埚",
       "temp_jitter_c": 50.0,
       "has_readout": false
+    },
+    "dev_pressure_vessel": {
+      "name": "黄铜加压器",
+      "temp_jitter_c": 30.0,
+      "has_readout": true,
+      "readout_precision_c": 10.0,
+      "pressure_atm": 2.0,
+      "price": 60
     }
+  },
+  "caravan": {
+    "name": "商队",
+    "visit_every_days": 7,
+    "first_visit_day": 3
   },
   "reaction": {
     "t_ref_c": 200.0,

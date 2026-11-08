@@ -2,13 +2,18 @@ class_name GameHud
 extends Control
 
 ## 星露谷式 HUD：右上木框（日期/时间/金币/信件/地点），
-## 左侧生命/理智竖条，底部交互提示与消息。
+## 左侧生命/理智竖条，底部交互提示与一次性结果浮字（toast）。
 
 const HUD_MARGIN := 16.0
 const TOP_WIDTH := 400.0
 const TOP_HEIGHT := 180.0
 const BAR_WIDTH := 20.0
 const BAR_HEIGHT := 130.0
+const TOAST_MAX_WIDTH := 560.0
+const TOAST_SLOT_HEIGHT := 44.0
+const TOAST_GAP := 10.0
+const TOAST_HOLD := 2.4
+const TOAST_FADE := 0.45
 
 var _date_label: Label
 var _time_label: Label
@@ -17,6 +22,10 @@ var _money_label: Label
 var _mail_label: Label
 var _hint_label: Label
 var _hint_panel: HudPanel
+var _toast_holder: CenterContainer
+var _toast_panel: PanelContainer
+var _toast_label: Label
+var _toast_tween: Tween = null
 var _hp_bar: ProgressBar
 var _sanity_bar: ProgressBar
 var _hp_max: int = 100
@@ -32,6 +41,7 @@ func setup(db: ContentDatabase = null) -> void:
 	_build_top_right()
 	_build_bars()
 	_build_bottom()
+	_build_toast()
 	_hint_label.add_theme_color_override("font_color", Color("#8c3a34"))
 
 
@@ -80,6 +90,34 @@ func set_mail(unread: int) -> void:
 func set_hint(text: String) -> void:
 	_hint_label.text = text
 	_hint_panel.visible = text != ""
+
+
+## 一次性行为结果（采集、睡觉、开门失败等）：浮出数秒后淡出。
+## tone: "success" 绿、"warn" 赭红、其余深墨。
+func show_toast(text: String, tone: String = "info") -> void:
+	if _toast_holder == null or text == "":
+		return
+	_toast_label.text = text
+	var color := Color("#2a211a")
+	match tone:
+		"success":
+			color = Color("#35632f")
+		"warn":
+			color = Color("#8c3a34")
+	_toast_label.add_theme_color_override("font_color", color)
+	_toast_holder.visible = true
+	_toast_holder.modulate = Color.WHITE
+	if _toast_tween != null and _toast_tween.is_valid():
+		_toast_tween.kill()
+	_toast_tween = create_tween()
+	_toast_tween.tween_interval(TOAST_HOLD)
+	_toast_tween.tween_property(_toast_holder, "modulate:a", 0.0, TOAST_FADE)
+	_toast_tween.tween_callback(_hide_toast)
+
+
+func _hide_toast() -> void:
+	if _toast_holder != null:
+		_toast_holder.visible = false
 
 
 func _build_top_right() -> void:
@@ -186,6 +224,35 @@ func _build_bottom() -> void:
 	_hint_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	_hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_hint_panel.content.add_child(_hint_label)
+
+
+func _build_toast() -> void:
+	_toast_holder = CenterContainer.new()
+	_toast_holder.visible = false
+	_toast_holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_toast_holder)
+	_toast_holder.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	_toast_holder.offset_left = -TOAST_MAX_WIDTH * 0.5
+	_toast_holder.offset_right = TOAST_MAX_WIDTH * 0.5
+	_toast_holder.offset_top = -HUD_MARGIN - 70.0 - TOAST_GAP - TOAST_SLOT_HEIGHT
+	_toast_holder.offset_bottom = -HUD_MARGIN - 70.0 - TOAST_GAP
+
+	_toast_panel = PanelContainer.new()
+	_toast_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var style := UiTheme.paper_style()
+	style.content_margin_left = 22.0
+	style.content_margin_right = 22.0
+	style.content_margin_top = 8.0
+	style.content_margin_bottom = 8.0
+	_toast_panel.add_theme_stylebox_override("panel", style)
+	_toast_holder.add_child(_toast_panel)
+
+	_toast_label = UiTheme.label("")
+	_toast_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	_toast_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_toast_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_toast_label.add_theme_constant_override("outline_size", 0)
+	_toast_panel.add_child(_toast_label)
 
 
 func _panel(min_width: float, padding: int = 26) -> HudPanel:

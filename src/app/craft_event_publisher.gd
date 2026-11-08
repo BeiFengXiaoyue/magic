@@ -103,6 +103,13 @@ func publish_flags(changed: String, value: Variant) -> void:
 	_emit("state_changed", "flags", { "changed": changed, "value": value })
 
 
+func publish_device(devices: DeviceState) -> void:
+	_emit("state_changed", "device", {
+		"device_id": devices.current_id(),
+		"owned": devices.owned_ids(),
+	})
+
+
 func publish_mail_arrived(ids: Array[String]) -> void:
 	_emit("cue_requested", "mail_arrived", { "ids": ids })
 

@@ -63,7 +63,11 @@ func refresh_records(view: Dictionary) -> void:
 			lines.append("改了什么：%s" % str(columns.get("changed", "")))
 			lines.append("其他条件：%s" % str(columns.get("conditions", "")))
 			lines.append("结果：%s" % str(columns.get("result", "")))
-			lines.append("压力：[color=#6E6A63]—[/color]")
+			var pressure: Variant = columns.get("pressure", null)
+			if pressure is String and pressure != "":
+				lines.append("压力：%s" % pressure)
+			else:
+				lines.append("压力：[color=#6E6A63]—[/color]")
 		else:
 			lines.append(str(record.get("text", "")))
 		lines.append("")

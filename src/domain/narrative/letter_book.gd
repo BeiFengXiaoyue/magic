@@ -74,7 +74,7 @@ func refresh_arrivals() -> Array[String]:
 		var conditions: Variant = arrival.get("conditions", null)
 		if not conditions is Dictionary:
 			continue
-		if not _conditions_met(conditions):
+		if not conditions_met(conditions):
 			continue
 		letter_state.status = "delivered"
 		letter_state.delivered_day = _clock.today()
@@ -113,6 +113,84 @@ func open(id: String) -> Dictionary:
 		"unlocks": unlocks,
 		"award": award,
 	}
+
+
+func reply(letter_id: String, option_id: String) -> Dictionary:
+	if not _db.has_letter(letter_id):
+		return { "ok": false, "reason": "unknown", "reply_id": "", "text": "" }
+	var letter_state := state(letter_id)
+	if letter_state.status == "pending":
+		return { "ok": false, "reason": "not_delivered", "reply_id": "", "text": "" }
+	if letter_state.status != "read":
+		return { "ok": false, "reason": "not_read", "reply_id": "", "text": "" }
+	var reply_data: Variant = entry(letter_id).get("reply", null)
+	if not reply_data is Dictionary:
+		return { "ok": false, "reason": "no_reply", "reply_id": "", "text": "" }
+	var chosen: Dictionary = {}
+	var options: Variant = reply_data.get("options", [])
+	if options is Array:
+		for option in options:
+			if option is Dictionary and str(option.get("id", "")) == option_id:
+				chosen = option
+				break
+	if chosen.is_empty():
+		return { "ok": false, "reason": "bad_option", "reply_id": "", "text": "" }
+	if letter_state.reply_id != "":
+		var same := letter_state.reply_id == option_id
+		return {
+			"ok": same,
+			"reason": "ok" if same else "already",
+			"reply_id": letter_state.reply_id,
+			"text": _reply_text(reply_data, letter_state.reply_id),
+		}
+	letter_state.reply_id = option_id
+	letter_state.reply_day = _clock.today()
+	for flag_id in _as_strings(chosen.get("flags", [])):
+		_flags.set_flag(flag_id)
+	return {
+		"ok": true,
+		"reason": "ok",
+		"reply_id": option_id,
+		"text": str(chosen.get("text", "")),
+	}
+
+
+func answer(letter_id: String, concept_id: String) -> Dictionary:
+	if not _db.has_letter(letter_id):
+		return { "ok": false, "reason": "unknown", "solved": false, "hint": "", "revealed": false }
+	var letter_state := state(letter_id)
+	if letter_state.status != "read":
+		return { "ok": false, "reason": "not_read", "solved": false, "hint": "", "revealed": false }
+	var puzzle: Variant = entry(letter_id).get("puzzle", null)
+	if not puzzle is Dictionary:
+		return { "ok": false, "reason": "no_puzzle", "solved": false, "hint": "", "revealed": false }
+	if letter_state.puzzle_solved:
+		return { "ok": true, "reason": "ok", "solved": true, "hint": "", "revealed": false }
+	if concept_id == str(puzzle.get("answer", "")):
+		letter_state.puzzle_solved = true
+		_apply_unlocks(letter_id, puzzle.get("reward", null))
+		return { "ok": true, "reason": "ok", "solved": true, "hint": "", "revealed": false }
+	letter_state.puzzle_attempts += 1
+	var hint_after := int(_db.constant("letter_interaction.puzzle_hint_wrong_count"))
+	var answer_after := int(_db.constant("letter_interaction.puzzle_fallback_wrong_count"))
+	var hint := str(puzzle.get("hint", ""))
+	if letter_state.puzzle_attempts >= answer_after:
+		letter_state.puzzle_solved = true
+		_apply_unlocks(letter_id, puzzle.get("reward", null))
+		return { "ok": true, "reason": "ok", "solved": true, "hint": hint, "revealed": true }
+	if letter_state.puzzle_attempts < hint_after:
+		hint = ""
+	return { "ok": true, "reason": "wrong", "solved": false, "hint": hint, "revealed": false }
+
+
+func _reply_text(reply_data: Dictionary, reply_id: String) -> String:
+	var options: Variant = reply_data.get("options", [])
+	if not options is Array:
+		return ""
+	for option in options:
+		if option is Dictionary and str(option.get("id", "")) == reply_id:
+			return str(option.get("text", ""))
+	return ""
 
 
 func snapshot() -> Dictionary:
@@ -158,7 +236,7 @@ func _as_strings(value: Variant) -> Array[String]:
 	return out
 
 
-func _conditions_met(conditions: Dictionary) -> bool:
+func conditions_met(conditions: Dictionary) -> bool:
 	if conditions.has("all"):
 		var all_conditions: Variant = conditions.get("all", [])
 		if not all_conditions is Array:

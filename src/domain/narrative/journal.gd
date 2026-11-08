@@ -22,6 +22,7 @@ func add_craft_entry(result: CraftResult, ctx: Dictionary) -> Dictionary:
 	var format := record_format()
 	var inputs: Dictionary = ctx.get("inputs", {})
 	var spirit_total := int(ctx.get("spirit_total", 0))
+	var pressure_atm := float(ctx.get("pressure_atm", 0.0))
 	var observation := _perception.describe(result, {"spirit_total": spirit_total})
 	var dominant := ""
 	var yield_ratio := 0.0
@@ -53,7 +54,7 @@ func add_craft_entry(result: CraftResult, ctx: Dictionary) -> Dictionary:
 				_device_name(str(entry["device_id"])),
 			],
 			"result": observation,
-			"pressure": null,
+			"pressure": ("%.1f atm" % pressure_atm) if pressure_atm > 0.0 else null,
 		}
 	else:
 		entry["text"] = "第 %d 天，%s，%s。%s" % [

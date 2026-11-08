@@ -62,6 +62,25 @@
           "cpt_huohou"
         ]
       },
+      "reply": {
+        "prompt": "回信给老波尔",
+        "options": [
+          {
+            "id": "rep_L02_thanks",
+            "text": "记下了，先试一炉。",
+            "flags": [
+              "flg_replied_pol"
+            ]
+          },
+          {
+            "id": "rep_L02_why",
+            "text": "你凭什么知道这些？",
+            "flags": [
+              "flg_replied_pol"
+            ]
+          }
+        ]
+      },
       "spirituality": {
         "on_read": "read_mystic_letter"
       }
@@ -95,6 +114,25 @@
         "notes": [
           "南坡湿地：清露草（野生）",
           "露根密丛：稀有清露草"
+        ]
+      },
+      "reply": {
+        "prompt": "回信给艾琳",
+        "options": [
+          {
+            "id": "rep_L03_thanks",
+            "text": "南坡水边，我记住了。",
+            "flags": [
+              "flg_replied_ailin"
+            ]
+          },
+          {
+            "id": "rep_L03_roots",
+            "text": "根真的能吃？",
+            "flags": [
+              "flg_replied_ailin"
+            ]
+          }
         ]
       },
       "spirituality": {
@@ -140,6 +178,25 @@
           "记录表：改了什么 / 其他条件 / 结果 / 压力"
         ]
       },
+      "reply": {
+        "prompt": "回信给玛格丽特",
+        "options": [
+          {
+            "id": "rep_L04_table",
+            "text": "表我抄了。",
+            "flags": [
+              "flg_replied_margaret"
+            ]
+          },
+          {
+            "id": "rep_L04_about",
+            "text": "以后少写“大约”。",
+            "flags": [
+              "flg_replied_margaret"
+            ]
+          }
+        ]
+      },
       "spirituality": {
         "on_read": null
       }
@@ -165,15 +222,20 @@
           ]
         }
       },
-      "body": "致那位新来的：\n\n我不出谜语了——上次那个“先见其形，后知其量”，\n答案是“压力”。你迟早要买的东西，就是能压住它的装置。\n\n玛格丽特那张表第四栏空着，不是她忘了。\n她只是还没找到能填进去的东西。\n\n——胡克\n\n（附：我上一封信里也有个谜语。答案是我自己。）",
-      "unlocks": {
-        "concepts": [
-          "cpt_yali",
-          "cpt_kongzhi_li"
-        ],
-        "flags": [
-          "flg_pressure_clue"
-        ]
+      "body": "致那位新来的：\n\n我留了个谜语在下面。猜一个词——猜中了，你才知道要买什么。\n\n玛格丽特那张表第四栏空着，不是她忘了。\n她只是还没找到能填进去的东西。\n\n答不上来也别急，多试几次。\n\n——胡克",
+      "puzzle": {
+        "prompt": "先见其形，后知其量。",
+        "answer": "cpt_yali",
+        "hint": "和水有关，也和重量有关。",
+        "reward": {
+          "concepts": [
+            "cpt_yali",
+            "cpt_kongzhi_li"
+          ],
+          "flags": [
+            "flg_pressure_clue"
+          ]
+        }
       },
       "spirituality": {
         "on_read": "read_mystic_letter"

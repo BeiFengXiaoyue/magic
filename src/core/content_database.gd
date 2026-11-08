@@ -12,6 +12,7 @@ var _recipes: Dictionary = {}
 var _items: Dictionary = {}
 var _nodes: Dictionary = {}
 var _letters: Dictionary = {}
+var _containers: Dictionary = {}
 var _forest: Dictionary = {}
 var _constants: Dictionary = {}
 var _element_order: Dictionary = {}
@@ -25,6 +26,7 @@ func load_all(path: String = "res://content") -> void:
 	var items_doc: Variant = _read_json(path.path_join("items.json"), "items.json")
 	var nodes_doc: Variant = _read_json(path.path_join("nodes.json"), "nodes.json")
 	var letters_doc: Variant = _read_json(path.path_join("letters.json"), "letters.json")
+	var containers_doc: Variant = _read_json(path.path_join("containers.json"), "containers.json")
 	var forest_doc: Variant = _read_json(path.path_join("forest.json"), "forest.json")
 	var constants_doc: Variant = _read_json(path.path_join("constants.json"), "constants.json")
 
@@ -37,7 +39,8 @@ func load_all(path: String = "res://content") -> void:
 		nodes_doc,
 		forest_doc,
 		constants_doc,
-		letters_doc
+		letters_doc,
+		containers_doc
 	)
 	_elements = validator.elements
 	_materials = validator.materials
@@ -45,6 +48,7 @@ func load_all(path: String = "res://content") -> void:
 	_items = validator.items
 	_nodes = validator.nodes
 	_letters = validator.letters
+	_containers = validator.containers
 	_forest = validator.forest
 	_constants = validator.constants
 	_element_order = validator.element_order
@@ -101,6 +105,21 @@ func letter(id: String) -> Dictionary:
 
 func has_letter(id: String) -> bool:
 	return _letters.has(id)
+
+
+func container(id: String) -> Dictionary:
+	if not _containers.has(id):
+		push_error("ContentDatabase: 未知容器 %s" % id)
+		return {}
+	return _containers[id]
+
+
+func has_container(id: String) -> bool:
+	return _containers.has(id)
+
+
+func container_ids() -> Array[String]:
+	return _sorted_ids(_containers)
 
 
 func forest() -> Dictionary:
@@ -170,6 +189,7 @@ func _reset() -> void:
 	_items.clear()
 	_nodes.clear()
 	_letters.clear()
+	_containers.clear()
 	_forest.clear()
 	_constants.clear()
 	_element_order.clear()

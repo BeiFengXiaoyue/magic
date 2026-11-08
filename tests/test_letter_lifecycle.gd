@@ -53,7 +53,9 @@ func run(ctx: TestContext) -> void:
 
 	letters.refresh_arrivals()
 	letters.open("ltr_L05")
-	ctx.check(flags.has("flg_pressure_clue"), "L05 设置加压线索")
+	ctx.check(not flags.has("flg_pressure_clue"), "L05 未答谜语前无加压线索")
+	letters.answer("ltr_L05", "cpt_yali")
+	ctx.check(flags.has("flg_pressure_clue"), "答对后设置加压线索")
 	ctx.check_eq(spirit.t, 8, "四封神秘信共 T+8")
 	ctx.check_eq(spirit.perception_tier(), "high", "T=8 达到高档")
 

@@ -4,11 +4,12 @@ extends RefCounted
 ## 场景交互分发（契约 02 §4.1）。
 ## 引擎只发 interact / scene_change；这里决定开面板、采集还是切场景。
 
-const SCENES: Array[String] = ["scene_workshop", "scene_shop", "scene_forest"]
+const SCENES: Array[String] = ["scene_workshop", "scene_shop", "scene_forest", "scene_attic"]
 const DOOR_TARGETS := {
 	"door_shop": "scene_shop",
 	"door_forest": "scene_forest",
 	"door_workshop": "scene_workshop",
+	"door_attic": "scene_attic",
 }
 
 var _publisher: CraftEventPublisher
@@ -35,7 +36,7 @@ func handle(target_id: String) -> Dictionary:
 				return {
 					"handled": true,
 					"kind": "message",
-					"message": "锅是冷的。先看看那只旧木箱。",
+					"message": "锅是冷的。楼上那只旧木箱里也许有东西。",
 				}
 			_publish_panel("crucible")
 			return { "handled": true, "kind": "panel", "message": "" }
@@ -43,13 +44,17 @@ func handle(target_id: String) -> Dictionary:
 			_publish_panel("shop")
 			return { "handled": true, "kind": "panel", "message": "" }
 		"attic_box":
-			_publish_panel_with("letters", { "source": "attic_box" })
+			_publish_panel("box")
 			return { "handled": true, "kind": "panel", "message": "旧木箱" }
 		"mail_tray":
 			_publish_panel_with("letters", { "source": "mail_tray" })
 			return { "handled": true, "kind": "panel", "message": "信盘" }
 		"bed":
-			return { "handled": true, "kind": "message", "message": "M3 还不能睡觉。" }
+			return {
+				"handled": true,
+				"kind": "message",
+				"message": "还不能睡觉——睡觉功能在后续版本开放。",
+			}
 	if DOOR_TARGETS.has(target_id):
 		handle_scene_change(str(DOOR_TARGETS[target_id]))
 		return { "handled": true, "kind": "scene", "message": "" }

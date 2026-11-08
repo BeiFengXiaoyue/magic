@@ -12,6 +12,7 @@ func run(ctx: TestContext) -> void:
 	_check_doors(ctx)
 	_check_no_overlap(ctx, SceneLayout.WORKSHOP)
 	_check_no_overlap(ctx, SceneLayout.SHOP)
+	_check_no_overlap(ctx, SceneLayout.ATTIC)
 	_check_spawn_clear(ctx)
 	_check_collision_stops_player(ctx)
 	_check_interact_reachable(ctx)
@@ -21,13 +22,17 @@ func run(ctx: TestContext) -> void:
 func _check_scene_counts(ctx: TestContext) -> void:
 	ctx.check_eq(
 		SceneLayout.interactables(SceneLayout.WORKSHOP).size(), 6,
-		"工坊应有坩埚、床、两扇门、旧木箱与信盘"
+		"工坊应有坩埚、床、两扇门、上阁楼梯子与信盘"
 	)
 	ctx.check_eq(
 		SceneLayout.interactables(SceneLayout.SHOP).size(), 2,
 		"小店应有柜台与一扇门"
 	)
-	for scene_id in [SceneLayout.WORKSHOP, SceneLayout.SHOP]:
+	ctx.check_eq(
+		SceneLayout.interactables(SceneLayout.ATTIC).size(), 2,
+		"阁楼应有旧木箱与下楼梯子"
+	)
+	for scene_id in [SceneLayout.WORKSHOP, SceneLayout.SHOP, SceneLayout.ATTIC]:
 		for item in SceneLayout.interactables(scene_id):
 			var size: Vector2 = item.get("interact_size", Vector2.ZERO)
 			ctx.check(
@@ -37,7 +42,7 @@ func _check_scene_counts(ctx: TestContext) -> void:
 
 
 func _check_furniture(ctx: TestContext) -> void:
-	for scene_id in [SceneLayout.WORKSHOP, SceneLayout.SHOP]:
+	for scene_id in [SceneLayout.WORKSHOP, SceneLayout.SHOP, SceneLayout.ATTIC]:
 		for item in SceneLayout.interactables(scene_id):
 			var kind := str(item.get("kind", ""))
 			if kind != "crucible" and kind != "bed" and kind != "counter":
@@ -72,10 +77,11 @@ func _check_furniture(ctx: TestContext) -> void:
 
 
 func _check_doors(ctx: TestContext) -> void:
-	for scene_id in [SceneLayout.WORKSHOP, SceneLayout.SHOP]:
+	for scene_id in [SceneLayout.WORKSHOP, SceneLayout.SHOP, SceneLayout.ATTIC]:
 		var area := SceneLayout.walkable_rect(scene_id).grow(-Player.MARGIN)
 		for item in SceneLayout.interactables(scene_id):
-			if str(item.get("kind", "")) != "door":
+			var kind := str(item.get("kind", ""))
+			if kind != "door" and kind != "ladder":
 				continue
 			var target := str(item.get("target_id", ""))
 			var position: Vector2 = item["position"]
@@ -122,7 +128,7 @@ func _check_no_overlap(ctx: TestContext, scene_id: String) -> void:
 
 
 func _check_spawn_clear(ctx: TestContext) -> void:
-	for scene_id in [SceneLayout.WORKSHOP, SceneLayout.SHOP]:
+	for scene_id in [SceneLayout.WORKSHOP, SceneLayout.SHOP, SceneLayout.ATTIC]:
 		var spawn := SceneLayout.spawn(scene_id)
 		for collider in SceneLayout.obstacles(scene_id):
 			ctx.check(
@@ -145,7 +151,7 @@ func _check_collision_stops_player(ctx: TestContext) -> void:
 
 ## 站在碰撞箱正下方（玩家半径之外）必须落在交互距离内。
 func _check_interact_reachable(ctx: TestContext) -> void:
-	for scene_id in [SceneLayout.WORKSHOP, SceneLayout.SHOP]:
+	for scene_id in [SceneLayout.WORKSHOP, SceneLayout.SHOP, SceneLayout.ATTIC]:
 		for item in SceneLayout.interactables(scene_id):
 			var collider: Rect2 = item["collider"]
 			if collider.size.x <= 0.0:

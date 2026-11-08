@@ -66,18 +66,23 @@
 - **为什么 L02 在 L03 前**：信件目录是 L02→L03；「配方先给、材料后指」也成立——玩家读完配方发现没材料，下一封信正好指路。
 - **L04 要求「L03 已读 + 首次卖出」两个条件**：只挂首次卖出会让玩家在跳过 L02/L03 时提前拿到 L04，破坏引导链。
 
-### 1.2 阁楼：Demo 不新增场景，旧木箱放工坊
+### 1.2 阁楼：独立场景 + 三层旧木箱（2026-11-08 实现）
 
-- Demo 范围只有工坊 / 小店 / 森林三场景；阁楼不在其中。
-- M3 在工坊内放 `attic_box`（旧木箱）作为 L01 的取信点；全量版再拆出阁楼场景。
-- L01 文本里的「阁楼」保持原文；Demo 的箱子上写「旧木箱」，交互提示不写「阁楼」，避免与场景不符。
-- L01 浅层原文「去阁楼，看看那口箱子」在 Demo 里是**叙事回响**（信本就在箱中，你已经开了箱）；实际指引由「坩埚解锁」承担。
+- 场景从三个扩展为四个：工坊 / 小店 / 森林 / **阁楼**（`scene_attic`）。
+- 工坊右墙 `(980, 450)` 放梯子 `door_attic`（`kind=ladder`），按 E 上阁楼；阁楼右墙 `(1080, 420)` 放 `door_workshop` 下楼。
+- 旧木箱迁到阁楼 `(480, 420)`，不再是工坊里的交互点。
+- 箱子分三层，数据在 `content/containers.json`：
+  - 第一层：`ltr_L01`；
+  - 第二层：需要 `cpt_huohou`（读完 L02），本轮无内容，解锁后显示「空的」；
+  - 第三层：需要 `cpt_kongzhi_bianliang`（读完 L04），锁定提示「等你分得清“想要”和“需要”再来」。
+- 开局提示改为「锅是冷的。楼上那只旧木箱里也许有东西。」；L01 文本里的「阁楼」「第三层」现在都有对应物。
+- 美术：`art_scene_attic` / `art_prop_ladder` 提示词已登记为 `draft`，缺图时走引擎占位。
 
 ### 1.3 L01 的门禁：坩埚在读完 L01 前不可用
 
 - 设计写 L01「拾取即得——坩埚与原料架可用」。M2 里坩埚一直可用；M3 把它改成 `flg_crucible_unlocked` 控制，读完 L01 置位。
 - 这是 M3 唯一新增的操作门禁；不改变炼制数值与流程，M1/M2 的直接用例测试不受影响。
-- 未解锁时交互提示：「锅是冷的。先看看那只旧木箱。」——这是环境提示，不是教程弹窗。
+- 未解锁时交互提示：「锅是冷的。楼上那只旧木箱里也许有东西。」——这是环境提示，不是教程弹窗。
 
 ### 1.4 L04 的灵性产出：机械线 = 无
 
@@ -91,17 +96,28 @@
 - 新增 `constants.perception.spirit_tiers = { "mid": 4, "high": 6 }`；`Perception.describe` 只读常量。
 - 这只是**描述丰富度**阈值，不是 P 的「微光/洞见/沉沦」锚定阈值；后者 M4 再定。
 
-### 1.6 L05：普通信，不出谜题
+### 1.6 L05：谜语（2026-11-08 实现）
 
-- 设计里 L05 是字谜＋翻面；M3 不做解密，L05 改成**普通信**：胡克直接把谜底「压力」写出来，并补一句「玛格丽特那张表第四栏空着，不是她忘了」。
-- 这样玩家不需要词条栏/答错计数/翻面，仍然拿到「压力」概念与加压装置的线索。
-- 字谜系统本身不删设计，见 §12；以后加 `puzzle` 字段即可。
+- 设计里 L05 是字谜＋翻面；现在补上**词条作答**，不做翻面。
+- `letters.json` 的 `puzzle` 字段：`prompt`、`answer`（概念 ID）、`hint`、`reward`（读信时不再直接发奖励，答对后发放）。
+- 词条栏列出 `constants.concepts` 的全部概念（含尚未解锁的「压力」），玩家点选作答；答错次数达到 `letter_interaction.puzzle_hint_wrong_count`（5）给提示，达到 `puzzle_fallback_wrong_count`（10）直接揭示答案并发放奖励。
+- L05 正文改为谜面引导（不再直接写「压力」）；标题「第一个谜语」保留。
+- 翻面/焦页/修复仍按 §12 后置。
+
+### 1.6b 回信（2026-11-08 实现）
+
+- `letters.json` 每封可选 `reply`：`prompt` + `options[{id,text,flags}]`；固定选项，不做自由文本。
+- 只有已读的信能回；回信记录 `reply_id/reply_day`，写入 `flags`，重复回同一句幂等、不能改选。
+- L02/L03/L04 各给两个回复选项；L04 的「你在信里用了‘大约’三次」由此获得前史支撑。
+- `LetterPanel` 底部显示回复按钮；`LetterUseCase.reply` 负责记录与事件发布。
 
 ### 1.7 其它裁剪
 
 | 项 | 裁决 |
 |---|---|
-| 商队送达 | M3 不实现商队；L05 投到门口信盘，`carrier = "caravan"` 只作显示文案 |
+| 商队送达 | L05 物理仍投门口信盘；`letter_view` 透传 `carrier`，显示「商队（信盘取件）」；商队本体/场景不做 |
+| 商队到访 | `constants.caravan`：第 3 天首访、每 7 天一次；到访日商店出现器材货架，非到访日显示「商队还没来」 |
+| 加压装置 | `constants.device.dev_pressure_vessel`（60 金币、2.0 atm）；`DeviceState` 记已购/装备；炼制记录写入压力列；本轮不改反应求解 |
 | 稀有采集点 | `node_qinglucao_rare_01` 一直在森林里；L03 只是把它写进手记（`Knowledge.location`），不做隐藏/生成门禁 |
 | 灰烬残页 | M3 不做物品化；焦页/修复整体后置 |
 | 旧记录格式 | 每条记录在**创建时**固化 `format`；L04 解锁后不改写旧条目（玩家自己的历史） |
@@ -665,14 +681,16 @@ func on_day_passed(day: int, season: int, year: int) -> void
 
 | `target_id` | 场景 | 位置建议 | 行为 |
 |---|---|---|---|
-| `attic_box` | 工坊 | 床边/角落，约 80×70 | 打开信件面板（L01 来源）；无信时「空的」 |
+| `door_attic` | 工坊 | 右墙 (980, 450)，交互 90×90 | 上阁楼；`kind=ladder`，无碰撞 |
+| `attic_box` | 阁楼 | (480, 420)，约 80×70 | 打开旧木箱三层面板；第一层给 L01，第二/三层按知识条件解锁 |
+| `door_workshop` | 阁楼 | 右墙 (1080, 420) | 下楼回工坊 |
 | `mail_tray` | 工坊 | 底墙门旁，约 60×40 | 打开信件面板；无信时「门口没有信」 |
-| `dev_clay_crucible` | 工坊 | 现有 | 未解锁 `flg_crucible_unlocked` → 提示「锅是冷的。先看看那只旧木箱。」；已解锁 → 开坩埚面板 |
+| `dev_clay_crucible` | 工坊 | 现有 | 未解锁 `flg_crucible_unlocked` → 提示「锅是冷的。楼上那只旧木箱里也许有东西。」；已解锁 → 开坩埚面板 |
 | `shop_counter` | 小店 | 现有 | 开小店面板（M2 行为不变） |
 
 - `attic_box` / `mail_tray` 的显示尺寸、碰撞箱、交互矩形由 `SceneLayout` 同源定义；M3 可先用占位色块，不阻塞。
-- `InteractUseCase` 增加可选 `flags: Flags = null`；`dev_clay_crucible` 在 `flags != null && !flags.has("flg_crucible_unlocked")` 时返回提示，不开面板。`attic_box` / `mail_tray` 发 `panel_requested("letters", {source})`。
-- 交互提示：`attic_box` → 「旧木箱」；`mail_tray` → 「信盘」。
+- `InteractUseCase` 增加可选 `flags: Flags = null`；`dev_clay_crucible` 在 `flags != null && !flags.has("flg_crucible_unlocked")` 时返回提示，不开面板。`attic_box` 发 `panel_requested("box")`；`mail_tray` 发 `panel_requested("letters", {source})`。
+- 交互提示：`door_attic` → 「上阁楼」；`attic_box` → 「旧木箱」；`mail_tray` → 「信盘」。
 - L01 读完后旧木箱不再产出新信；`mail_tray` 是唯一后续取信点。
 
 ### 7.5 事件总线新增键名（登记到 02 §4.3）

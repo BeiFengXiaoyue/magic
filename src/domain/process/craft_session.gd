@@ -16,6 +16,8 @@ var elapsed_minutes: int = 0
 var progress: float = 0.0
 var result: CraftResult = null
 var finished: bool = false
+var device_id: String = ""
+var pressure_atm: float = 0.0
 
 var element_pool: Dictionary = {}
 

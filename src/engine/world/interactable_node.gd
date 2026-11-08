@@ -13,6 +13,7 @@ const COLOR_NODE := Color("#6f9a5a")
 const COLOR_WILD := Color("#b7d27a")
 const COLOR_BOX := Color("#5c4b3a")
 const COLOR_TRAY := Color("#6e6a63")
+const COLOR_LADDER := Color("#7a5c3a")
 const COLOR_UNAVAILABLE := Color("#4a4a4a")
 
 var target_id: String = ""
@@ -48,6 +49,8 @@ func setup(
 		_base_color = COLOR_NODE
 	elif kind == "door":
 		_base_color = COLOR_DOOR
+	elif kind == "ladder":
+		_base_color = COLOR_LADDER
 	elif kind == "attic_box":
 		_base_color = COLOR_BOX
 	elif kind == "mail_tray":
@@ -112,6 +115,13 @@ func _draw() -> void:
 	if kind == "door":
 		draw_rect(Rect2(-18.0, -32.0, 36.0, 64.0), color)
 		draw_rect(Rect2(-18.0, -32.0, 36.0, 64.0), COLOR_DOOR_FRAME, false, 3.0)
+	elif kind == "ladder":
+		draw_rect(Rect2(-14.0, -38.0, 6.0, 76.0), color)
+		draw_rect(Rect2(8.0, -38.0, 6.0, 76.0), color)
+		for rung in 4:
+			var y := -26.0 + float(rung) * 17.0
+			draw_rect(Rect2(-8.0, y, 16.0, 5.0), color)
+		draw_rect(Rect2(-16.0, -40.0, 32.0, 80.0), COLOR_DOOR_FRAME, false, 2.0)
 	elif kind == "counter":
 		draw_rect(Rect2(-40.0, -20.0, 80.0, 40.0), color)
 	elif kind == "bed":

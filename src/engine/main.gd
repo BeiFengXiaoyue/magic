@@ -10,7 +10,7 @@ const ADD_COUNT := 1
 const MINUTES_PER_HOUR := 60.0
 const TIME_FORMAT := "%02d:%02d · %s"
 const CRUCIBLE_PANEL_SIZE := Vector2(1180.0, 680.0)
-const SHOP_PANEL_SIZE := Vector2(660.0, 420.0)
+const SHOP_PANEL_SIZE := Vector2(660.0, 560.0)
 const UI_LAYER := 10
 
 var _db: ContentDatabase
@@ -34,8 +34,12 @@ var _flags: Flags
 var _knowledge: Knowledge
 var _spirituality: Spirituality
 var _journal: Journal
+var _devices: DeviceState
+var _buy: BuyUseCase
 var _letters: LetterBook
 var _letter_use_case: LetterUseCase
+var _boxes: BoxBook
+var _box_use_case: BoxUseCase
 var _day_use_case: DayUseCase
 
 var _world: WorldView
@@ -47,14 +51,17 @@ var _crucible: CruciblePanel
 var _observation: ObservationPanel
 var _shop: ShopPanel
 var _letter_panel: LetterPanel
+var _box_panel: BoxPanel
 var _journal_panel: JournalPanel
 var _menu_panel: MenuPanel
 var _crucible_overlay: CenterContainer
 var _shop_overlay: CenterContainer
 var _letter_overlay: CenterContainer
+var _box_overlay: CenterContainer
 var _journal_overlay: CenterContainer
 var _menu_overlay: CenterContainer
 var _letter_source: String = ""
+var _open_box_id: String = "attic_box"
 var _message_log: Array[String] = []
 
 var _pending_inputs: Dictionary = {}
@@ -77,7 +84,7 @@ func _ready() -> void:
 	_start_scene()
 	_refresh_all()
 	_letter_use_case.refresh()
-	_notify("锅是冷的。先看看那只旧木箱。")
+	_notify("锅是冷的。楼上那只旧木箱里也许有东西。")
 
 
 func _process(delta: float) -> void:
@@ -143,18 +150,23 @@ func _build_panels() -> void:
 	_crucible_overlay = _make_overlay()
 	var frame := PanelContainer.new()
 	frame.custom_minimum_size = CRUCIBLE_PANEL_SIZE
+	frame.add_theme_stylebox_override("panel", UiTheme.crucible_style())
 	var box := VBoxContainer.new()
+	box.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	var header := HBoxContainer.new()
+	header.custom_minimum_size = Vector2(0.0, 40.0)
 	header.add_child(UiTheme.title("炼药工坊"))
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(spacer)
 	var close_button := Button.new()
 	close_button.text = "关闭"
+	UiTheme.style_button(close_button)
 	close_button.pressed.connect(_close_panels)
 	header.add_child(close_button)
 	box.add_child(header)
 	var row := HBoxContainer.new()
+	row.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	row.add_theme_constant_override("separation", PANEL_SEPARATION)
 	box.add_child(row)
 	_shelf = MaterialShelf.new()
@@ -173,6 +185,7 @@ func _build_panels() -> void:
 	_shop_overlay = _make_overlay()
 	var shop_frame := PanelContainer.new()
 	shop_frame.custom_minimum_size = SHOP_PANEL_SIZE
+	shop_frame.add_theme_stylebox_override("panel", UiTheme.paper_style())
 	_shop = ShopPanel.new()
 	_shop.setup()
 	shop_frame.add_child(_shop)
@@ -185,9 +198,23 @@ func _build_panels() -> void:
 	_letter_panel = LetterPanel.new()
 	_letter_panel.setup()
 	_letter_panel.letter_selected.connect(_on_letter_selected)
+	_letter_panel.reply_selected.connect(_on_letter_reply)
+	_letter_panel.answer_selected.connect(_on_letter_answer)
 	_letter_panel.close_requested.connect(_close_panels)
 	letter_frame.add_child(_letter_panel)
 	_letter_overlay.add_child(letter_frame)
+
+	_box_overlay = _make_overlay()
+	var box_frame := PanelContainer.new()
+	box_frame.custom_minimum_size = Vector2(780.0, 480.0)
+	box_frame.add_theme_stylebox_override("panel", UiTheme.paper_style())
+	_box_panel = BoxPanel.new()
+	_box_panel.setup()
+	_box_panel.layer_selected.connect(_on_box_layer_selected)
+	_box_panel.letter_requested.connect(_on_box_letter_requested)
+	_box_panel.close_requested.connect(_close_panels)
+	box_frame.add_child(_box_panel)
+	_box_overlay.add_child(box_frame)
 
 	_journal_overlay = _make_overlay()
 	var journal_frame := PanelContainer.new()
@@ -242,8 +269,10 @@ func _assemble() -> void:
 	_gather_process = GatherProcess.new(_db)
 	_economy = Economy.new(_db)
 	_publisher = CraftEventPublisher.new(Events, _perception)
+	_devices = DeviceState.new(_db)
+	_buy = BuyUseCase.new(_db, _clock, _wallet, _devices, _publisher)
 	_use_case = CraftUseCase.new(
-		_db, _clock, _inventory, _craft_process, _publisher, _journal, _spirituality
+		_db, _clock, _inventory, _craft_process, _publisher, _journal, _spirituality, _devices
 	)
 	_wild_spawner = WildSpawner.new(_db, _rng)
 	_gather = GatherUseCase.new(_db, _gather_process, _inventory, _character, _clock, _rng, _wild_spawner, _publisher)
@@ -251,6 +280,8 @@ func _assemble() -> void:
 	_interact = InteractUseCase.new(_publisher, _gather, _flags)
 	_letters = LetterBook.new(_db, _clock, _flags, _knowledge, _spirituality, _journal)
 	_letter_use_case = LetterUseCase.new(_db, _letters, _journal, _spirituality, _knowledge, _publisher)
+	_boxes = BoxBook.new(_db, _letters)
+	_box_use_case = BoxUseCase.new(_boxes)
 	_day_use_case = DayUseCase.new(_spirituality, _letter_use_case)
 	_clock.day_passed.connect(_on_day_passed)
 	_time_driver = GameTimeDriver.new(_db, _use_case)
@@ -268,6 +299,8 @@ func _connect_signals() -> void:
 	_crucible.start_pressed.connect(_on_start_pressed)
 	_crucible.take_out_pressed.connect(_on_take_out_pressed)
 	_shop.sell_requested.connect(_on_sell_requested)
+	_shop.buy_requested.connect(_on_buy_requested)
+	_shop.equip_requested.connect(_on_equip_requested)
 	_shop.close_requested.connect(_close_panels)
 
 
@@ -294,6 +327,8 @@ func _scene_name(scene_id: String) -> String:
 		return "小店"
 	if scene_id == SceneLayout.FOREST:
 		return "晨暮森林"
+	if scene_id == SceneLayout.ATTIC:
+		return "阁楼"
 	return scene_id
 
 
@@ -319,6 +354,55 @@ func _on_take_out_pressed() -> void:
 
 func _on_sell_requested(product_index: int) -> void:
 	Events.action_requested.emit("sell_product", { "product_index": product_index })
+
+
+func _on_buy_requested(device_id: String) -> void:
+	if _buy == null:
+		return
+	var result := _buy.buy(device_id)
+	if bool(result.get("bought", false)):
+		_shop.set_status("买下并装备：%s。" % _device_name(device_id))
+		if _craft_process != null and _devices != null:
+			_craft_process.set_device(_devices.current_id())
+	else:
+		_shop.set_status(_buy_failure_text(str(result.get("reason", ""))))
+	_refresh_shop()
+
+
+func _on_equip_requested(device_id: String) -> void:
+	if _buy == null:
+		return
+	var result := _buy.equip(device_id)
+	if bool(result.get("ok", false)):
+		_shop.set_status("已装备：%s。" % _device_name(device_id))
+		if _craft_process != null and _devices != null:
+			_craft_process.set_device(_devices.current_id())
+	else:
+		_shop.set_status("还没买下这件器材。")
+	_refresh_shop()
+
+
+func _device_name(device_id: String) -> String:
+	var device_table: Variant = _db.constant("device")
+	if device_table is Dictionary:
+		var entry: Variant = device_table.get(device_id, null)
+		if entry is Dictionary:
+			return str(entry.get("name", device_id))
+	return device_id
+
+
+func _buy_failure_text(reason: String) -> String:
+	match reason:
+		"poor":
+			return "金币不够。"
+		"owned":
+			return "这件已经买下了。"
+		"no_caravan":
+			return "商队还没来。"
+		"not_for_sale":
+			return "这件不卖。"
+		_:
+			return "没有这件东西。"
 
 
 func _on_action_requested(action: String, payload: Dictionary) -> void:
@@ -357,29 +441,33 @@ func _handle_interact(payload: Dictionary) -> void:
 		return
 	var result := _interact.handle(target_id)
 	if result.has("success"):
-		_notify(_gather_text(result))
+		_report_gather(result)
 	elif str(result.get("kind", "")) == "message":
-		_notify(str(result.get("message", "")))
+		var blocked := target_id == "dev_clay_crucible" or target_id == "bed"
+		_notify(str(result.get("message", "")), "warn" if blocked else "info")
 
 
 func _gather_and_report(node_id: String) -> void:
 	if _gather == null:
 		return
-	_notify(_gather_text(_gather.gather(node_id)))
+	_report_gather(_gather.gather(node_id))
 
 
-func _gather_text(result: Dictionary) -> String:
+func _report_gather(result: Dictionary) -> void:
 	var reason := str(result.get("reason", ""))
-	if reason == "ok":
-		var material := _db.material(str(result.get("material_id", "")))
-		return "采到 %d 份%s。" % [int(result.get("count", 0)), str(material.get("name", "材料"))]
-	if reason == "miss":
-		return "空手而归。"
-	if reason == "regrowing":
-		return "这里还没长回来。"
-	if reason == "unknown_node":
-		return "这里没有可采的东西。"
-	return ""
+	match reason:
+		"ok":
+			var material := _db.material(str(result.get("material_id", "")))
+			_notify(
+				"采到 %d 份%s。" % [int(result.get("count", 0)), str(material.get("name", "材料"))],
+				"success"
+			)
+		"miss":
+			_notify("空手而归：这一丛没找到可用的材料。", "warn")
+		"regrowing":
+			_notify("这里还没长回来，过几天再来。", "warn")
+		_:
+			_notify("这里没有可采的东西。", "warn")
 
 
 func _sell_product(product_index: int) -> void:
@@ -405,6 +493,8 @@ func _on_panel_requested(panel: String, params: Dictionary) -> void:
 			_open_shop()
 		"letters":
 			_open_letters(str(params.get("source", "")))
+		"box":
+			_open_box()
 		"journal":
 			_open_journal(str(params.get("page", "records")))
 
@@ -413,6 +503,7 @@ func _open_crucible() -> void:
 	_hud.visible = false
 	_crucible_overlay.visible = true
 	_shop_overlay.visible = false
+	_box_overlay.visible = false
 	_world.set_input_enabled(false)
 	_refresh_pending()
 	_crucible.select_tier(_pending_tier)
@@ -426,6 +517,7 @@ func _open_shop() -> void:
 	_hud.visible = false
 	_crucible_overlay.visible = false
 	_shop_overlay.visible = true
+	_box_overlay.visible = false
 	_world.set_input_enabled(false)
 	_refresh_shop()
 	_shop.set_status("")
@@ -438,6 +530,8 @@ func _close_panels() -> void:
 		_shop_overlay.visible = false
 	if _letter_overlay != null:
 		_letter_overlay.visible = false
+	if _box_overlay != null:
+		_box_overlay.visible = false
 	if _journal_overlay != null:
 		_journal_overlay.visible = false
 	if _menu_overlay != null:
@@ -454,12 +548,44 @@ func _open_letters(source: String) -> void:
 		return
 	_letter_source = source
 	_letter_overlay.visible = true
+	_box_overlay.visible = false
 	_crucible_overlay.visible = false
 	_shop_overlay.visible = false
 	_journal_overlay.visible = false
 	_world.set_input_enabled(false)
 	_letter_panel.set_status("")
 	_refresh_letter_list()
+
+
+func _open_box() -> void:
+	_hud.visible = false
+	if _box_use_case == null:
+		return
+	_crucible_overlay.visible = false
+	_shop_overlay.visible = false
+	_letter_overlay.visible = false
+	_journal_overlay.visible = false
+	_menu_overlay.visible = false
+	_box_overlay.visible = true
+	_world.set_input_enabled(false)
+	_box_panel.show_layers(_box_use_case.view(_open_box_id))
+
+
+func _on_box_layer_selected(index: int) -> void:
+	if _box_use_case == null:
+		return
+	var result := _box_use_case.open_layer(_open_box_id, index)
+	var title := ""
+	var letter_id := str(result.get("letter_id", ""))
+	if letter_id != "" and _db.has_letter(letter_id):
+		title = str(_db.letter(letter_id).get("title", ""))
+	_box_panel.show_result(index, result, title)
+
+
+func _on_box_letter_requested(letter_id: String) -> void:
+	_box_overlay.visible = false
+	_open_letters("attic_box")
+	_on_letter_selected(letter_id)
 
 
 func _refresh_letter_list() -> void:
@@ -477,6 +603,37 @@ func _on_letter_selected(letter_id: String) -> void:
 		_hud.set_mail(_letters.unread_ids().size())
 
 
+func _on_letter_reply(letter_id: String, option_id: String) -> void:
+	if _letter_use_case == null:
+		return
+	var result := _letter_use_case.reply(letter_id, option_id)
+	if bool(result.get("ok", false)):
+		_letter_panel.show_letter(result.get("view", {}))
+		_letter_panel.set_status("信已寄出。")
+	else:
+		_letter_panel.set_status("这封信现在不能回。")
+
+
+func _on_letter_answer(letter_id: String, concept_id: String) -> void:
+	if _letter_use_case == null:
+		return
+	var result := _letter_use_case.answer(letter_id, concept_id)
+	if not bool(result.get("ok", false)):
+		_letter_panel.set_status("现在还不能作答。")
+		return
+	var view: Dictionary = result.get("view", {})
+	var puzzle_view: Dictionary = view.get("puzzle", {})
+	var answer_label := str(puzzle_view.get("answer_label", ""))
+	_letter_panel.show_letter(view)
+	if bool(result.get("solved", false)):
+		if bool(result.get("revealed", false)):
+			_letter_panel.set_status("试得够多了。谜底是「%s」。" % answer_label)
+		else:
+			_letter_panel.set_status("猜中了：%s。" % answer_label)
+	else:
+		_letter_panel.set_status("不对。再想想。")
+
+
 func _open_journal(page: String) -> void:
 	_hud.visible = false
 	if _letter_use_case == null:
@@ -485,6 +642,7 @@ func _open_journal(page: String) -> void:
 	_crucible_overlay.visible = false
 	_shop_overlay.visible = false
 	_letter_overlay.visible = false
+	_box_overlay.visible = false
 	_world.set_input_enabled(false)
 	_refresh_journal()
 	_journal_panel.show_page(page)
@@ -505,6 +663,7 @@ func _open_menu(page: String = "items") -> void:
 	_crucible_overlay.visible = false
 	_shop_overlay.visible = false
 	_letter_overlay.visible = false
+	_box_overlay.visible = false
 	_journal_overlay.visible = false
 	_world.set_input_enabled(false)
 	_refresh_menu()
@@ -589,12 +748,16 @@ func _demand_detail_text() -> String:
 ".join(lines)
 
 
-func _notify(text: String) -> void:
+## 行为结果：入消息日志（菜单里可回看），并在 HUD 上浮出几秒。
+## 面板打开时 HUD 已隐藏，面板内操作请同时写面板状态栏。
+func _notify(text: String, tone: String = "info") -> void:
 	if text == "":
 		return
 	_message_log.append(text)
 	while _message_log.size() > 10:
 		_message_log.pop_front()
+	if _hud != null:
+		_hud.show_toast(text, tone)
 	if _menu_overlay != null and _menu_overlay.visible:
 		_refresh_menu()
 
@@ -626,6 +789,8 @@ func _refresh_shop() -> void:
 			"can_sell": bool(quote.get("can_sell", false)),
 		})
 	_shop.refresh(view, _demand_text())
+	if _buy != null:
+		_shop.refresh_offers(_buy.offers(), _buy.is_caravan_day())
 
 
 func _add_material(payload: Dictionary) -> void:
@@ -636,7 +801,8 @@ func _add_material(payload: Dictionary) -> void:
 	var current := int(_pending_inputs.get(mat_id, 0))
 	var available := _inventory.count_material(mat_id) - current
 	if available <= 0:
-		_notify("库存不足。")
+		_crucible.set_status("库存不足。")
+		_notify("库存不足。", "warn")
 		return
 	_pending_inputs[mat_id] = current + mini(count, available)
 	_refresh_pending()
@@ -673,11 +839,13 @@ func _start() -> void:
 	if _active:
 		return
 	if _pending_inputs.is_empty():
-		_notify("先投料。")
+		_crucible.set_status("先投料。")
+		_notify("先投料。", "warn")
 		return
 	var session_id := _use_case.begin(_pending_inputs, _pending_tier)
 	if session_id == "":
-		_notify("材料不足，或上一炉还没取出。")
+		_crucible.set_status("材料不足，或上一炉还没取出。")
+		_notify("材料不足，或上一炉还没取出。", "warn")
 		return
 	_pending_inputs.clear()
 	_crucible.set_status("炼制中……")
@@ -690,7 +858,8 @@ func _take_out() -> void:
 		return
 	var result := _use_case.take_out()
 	if result == null:
-		_notify("还没到平衡，再等等。")
+		_crucible.set_status("还没到平衡，再等等。")
+		_notify("还没到平衡，再等等。", "warn")
 		return
 	_observation.set_observation(_perception.describe(result, { "spirit_total": 0 }))
 	_crucible.set_status("取出成功。")
@@ -713,6 +882,11 @@ func _on_state_changed(scope: String, payload: Dictionary) -> void:
 				_refresh_menu()
 		"letters":
 			_hud.set_mail(int(payload.get("unread", 0)))
+		"device":
+			if _craft_process != null and _devices != null:
+				_craft_process.set_device(_devices.current_id())
+			if _shop_overlay != null and _shop_overlay.visible:
+				_refresh_shop()
 		"knowledge", "journal":
 			if _journal_overlay != null and _journal_overlay.visible:
 				_refresh_journal()

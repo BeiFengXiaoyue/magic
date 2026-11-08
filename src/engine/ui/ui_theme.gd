@@ -70,6 +70,49 @@ static func menu_style() -> StyleBox:
 	return paper_style()
 
 
+static func crucible_style() -> StyleBox:
+	var texture := ArtAssets.texture("art_ui_crucible_frame")
+	if texture != null:
+		var frame := StyleBoxTexture.new()
+		frame.texture = texture
+		frame.texture_margin_left = 48.0
+		frame.texture_margin_right = 48.0
+		frame.texture_margin_top = 48.0
+		frame.texture_margin_bottom = 48.0
+		frame.content_margin_left = 32.0
+		frame.content_margin_right = 32.0
+		frame.content_margin_top = 28.0
+		frame.content_margin_bottom = 28.0
+		return frame
+	return menu_style()
+
+
+static func style_button(button: Button) -> void:
+	button.add_theme_stylebox_override("normal", _button_box(Color("#c9bfa8"), Color("#6b5a44")))
+	button.add_theme_stylebox_override("hover", _button_box(Color("#d8cfb9"), Color("#8c3a34")))
+	button.add_theme_stylebox_override("pressed", _button_box(Color("#b9aa8d"), Color("#8c3a34")))
+	button.add_theme_stylebox_override(
+		"disabled",
+		_button_box(Color("#9a9284"), Color("#6b5a44"))
+	)
+	button.add_theme_color_override("font_color", Color("#2a211a"))
+	button.add_theme_color_override("font_hover_color", Color("#2a211a"))
+	button.add_theme_color_override("font_pressed_color", Color("#8c3a34"))
+	button.add_theme_color_override("font_disabled_color", Color("#6b665e"))
+
+
+static func _button_box(fill: Color, border: Color) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = fill
+	style.border_color = border
+	style.set_border_width_all(2)
+	style.content_margin_left = 10.0
+	style.content_margin_right = 10.0
+	style.content_margin_top = 4.0
+	style.content_margin_bottom = 4.0
+	return style
+
+
 static func paper_style() -> StyleBoxFlat:
 	var paper := StyleBoxFlat.new()
 	paper.bg_color = Color("#c9bfa8")

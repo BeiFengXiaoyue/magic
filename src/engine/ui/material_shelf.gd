@@ -40,6 +40,7 @@ func refresh(inventory: Inventory, disabled: bool) -> void:
 		var count := inventory.count_material(mat_id)
 		var button := Button.new()
 		button.text = "%s  ×%d" % [entry.get("name", mat_id), count]
+		UiTheme.style_button(button)
 		button.disabled = disabled or count <= 0
 		button.pressed.connect(_on_material_pressed.bind(mat_id))
 		_list.add_child(button)

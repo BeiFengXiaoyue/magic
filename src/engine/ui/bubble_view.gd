@@ -34,10 +34,12 @@ const COLOR_STEAM := Color(0.85, 0.8, 0.7)
 var _bubble_level: int = 0
 var _steam_level: int = 0
 var _time: float = 0.0
+var _texture: Texture2D = null
 
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_texture = ArtAssets.texture("art_ui_bubble_pot")
 	set_process(true)
 
 
@@ -54,10 +56,15 @@ func _process(delta: float) -> void:
 
 func _draw() -> void:
 	var rect_size := size
-	draw_rect(Rect2(Vector2.ZERO, rect_size), COLOR_PANEL)
 	var liquid_height := rect_size.y * LIQUID_HEIGHT_RATIO
 	var liquid_top := rect_size.y - liquid_height
-	draw_rect(Rect2(0.0, liquid_top, rect_size.x, liquid_height), COLOR_LIQUID)
+	if _texture != null:
+		draw_texture_rect(_texture, Rect2(Vector2.ZERO, rect_size), false)
+		liquid_top = rect_size.y * 0.30
+		liquid_height = rect_size.y * 0.25
+	else:
+		draw_rect(Rect2(Vector2.ZERO, rect_size), COLOR_PANEL)
+		draw_rect(Rect2(0.0, liquid_top, rect_size.x, liquid_height), COLOR_LIQUID)
 
 	var bubble_count := int(BASE_BUBBLES + BUBBLES_PER_LEVEL * float(_bubble_level))
 	for index in bubble_count:

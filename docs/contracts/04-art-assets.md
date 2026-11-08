@@ -242,7 +242,8 @@ draft ──抽 4 张、人眼挑 1 张、回填 seed──▶ generated
 | `art_scene_workshop` | scene | 炼药工坊（坩埚强光、大暗部） | M2 | generated |
 | `art_scene_shop` | scene | 小店（柜台、信件桌、公告板） | M2 | generated |
 | `art_scene_forest` | scene | 晨暮森林·南坡（清露草、路径、雾） | M2 | generated |
-| `art_scene_attic` | scene | 阁楼（旧箱、尘埃、极暗） | M3 | todo |
+| `art_scene_attic` | scene | 阁楼（旧箱、尘埃、极暗） | M3 | draft |
+| `art_prop_ladder` | prop | 上阁楼 / 下楼的木梯 | M3 | draft |
 | `art_char_hero_walk` | char | 主角**左右两向**行走 sheet（上下移动复用左右，纯垂直时沿用上一朝向） | M2 | generated |
 | `art_prop_crucible_clay` | prop | 陶土坩埚（M1 核心交互） | M1 | generated |
 | `art_prop_ingredient_rack` | prop | 原料架 | M1 | generated |
@@ -266,6 +267,16 @@ draft ──抽 4 张、人眼挑 1 张、回填 seed──▶ generated
 | `art_ui_icon_coin` | ui | 金币图标（HUD 金币） | M3 | generated |
 | `art_ui_icon_letter` | ui | 信件图标（HUD 未读） | M3 | generated |
 | `art_ui_icon_potion` | ui | 药瓶图标（背包成品） | M3 | generated |
+| `art_ui_crucible_frame` | ui | 坩埚界面九宫格底（木框 + 暗石台面） | M3 | generated |
+| `art_ui_bubble_pot` | ui | 坩埚口特写（气泡视图底图） | M3 | generated |
+| `art_ui_flame_ice` | ui | 火候·冰浴图标 | M3 | generated |
+| `art_ui_flame_cold` | ui | 火候·冷浸图标 | M3 | generated |
+| `art_ui_flame_low` | ui | 火候·微火图标 | M3 | generated |
+| `art_ui_flame_mid` | ui | 火候·中火图标 | M3 | generated |
+| `art_ui_flame_high` | ui | 火候·大火图标 | M3 | generated |
+| `art_ui_flame_raging` | ui | 火候·猛火图标 | M3 | generated |
+| `art_ui_icon_fire` | ui | 点火按钮图标（火柴） | M3 | generated |
+| `art_ui_icon_ladle` | ui | 取出按钮图标（长柄勺） | M3 | generated |
 | `art_mob_yelang` | mob | 野狼（实体怪，有影子） | M4 | todo |
 | `art_mob_dushe` | mob | 毒蛇（实体怪） | M4 | todo |
 | `art_fx_bubbles` | fx | 坩埚气泡/蒸气（循环，video 工作流） | M1 | todo |

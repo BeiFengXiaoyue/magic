@@ -21,8 +21,12 @@ func run(ctx: TestContext) -> void:
 	var l05 := db.letter("ltr_L05")
 	ctx.check(str(l01.get("body", "")).contains("致后来者"), "L01 正文")
 	ctx.check(str(l02.get("body", "")).contains("凝定主修复"), "L02 正文")
-	ctx.check(str(l05.get("body", "")).contains("压力"), "L05 直接给出压力")
-	ctx.check(not l05.has("puzzle"), "M3 不出谜题")
+	var puzzle: Dictionary = l05.get("puzzle", {})
+	ctx.check_eq(str(puzzle.get("answer", "")), "cpt_yali", "L05 谜底是压力")
+	ctx.check(not l05.has("unlocks"), "L05 的奖励挂在谜语上")
+	ctx.check(l02.has("reply"), "L02 可回信")
+	ctx.check(l03.has("reply"), "L03 可回信")
+	ctx.check(l04.has("reply"), "L04 可回信")
 
 	for entry in [l01, l02, l03, l04, l05]:
 		ctx.check(not str(entry.get("title", "")).is_empty(), "标题非空")

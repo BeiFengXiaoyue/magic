@@ -273,6 +273,7 @@ temperature_c = clamp(nominal_c(tier) + U(−temp_jitter_c, +temp_jitter_c), 0, 
 
 - `nominal_c` 与 `temp_jitter_c` 来自 `constants.reaction.temperature_tiers` 与 `constants.device`；**禁止在代码里写字面量**。
 - 每次 `start` / `set_tier` 消费一次 `device` 流；`tick` 期间温度不变。
+- **装置切换（2026-11-08 追加）**：`CraftProcess.set_device(device_id)` 在 `constants.device` 内切换当前设备；`CraftSession` 记录 `device_id` 与 `pressure_atm`，`Journal` 的标准表压力列据此填写。`pressure_atm` 本轮只记录，不参与反应求解。
 
 **实例二 · 采集（M2）**
 
