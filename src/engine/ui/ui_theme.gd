@@ -53,26 +53,13 @@ static func label(text: String) -> Label:
 
 
 static func panel_style() -> StyleBox:
-	var texture := ArtAssets.texture("art_ui_panel_frame")
-	if texture != null:
-		var textured := StyleBoxTexture.new()
-		textured.texture = texture
-		textured.texture_margin_left = 48.0
-		textured.texture_margin_right = 48.0
-		textured.texture_margin_top = 48.0
-		textured.texture_margin_bottom = 48.0
-		textured.content_margin_left = 16.0
-		textured.content_margin_right = 16.0
-		textured.content_margin_top = 12.0
-		textured.content_margin_bottom = 12.0
-		return textured
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color("#33281e")
-	style.border_color = Color("#8a6a4a")
-	style.set_border_width_all(3)
+	style.bg_color = Color("#42301f")
+	style.border_color = Color("#c08a45")
+	style.set_border_width_all(4)
 	style.set_corner_radius_all(0)
 	style.shadow_color = Color(0.0, 0.0, 0.0, 0.45)
-	style.shadow_size = 4
+	style.shadow_size = 5
 	style.content_margin_left = 16.0
 	style.content_margin_right = 16.0
 	style.content_margin_top = 10.0

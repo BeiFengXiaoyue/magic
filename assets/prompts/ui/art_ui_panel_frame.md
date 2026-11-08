@@ -2,18 +2,18 @@
 id: art_ui_panel_frame
 category: ui
 purpose: "羊皮纸面板框：HUD / 信件 / 手记的通用九宫格底"
-status: draft
+status: generated
 workflow: 无参考生图.json
 ref: null
 canvas: 768x768
-seed: null
+seed: 2415048765784961169
 tier: demo
 ---
 
 ## 正向
 
 ```
-hand-drawn 2D game asset, Don't Starve ink illustration style, Rusty Lake moody atmosphere, thick dark ink outlines in #1A1714 (never pure black), rough hand-drawn linework, visible dry-brush stroke edges, subtle canvas paper texture overlay, heavily desaturated cold muted palette (aged wood #5C4B3A, grey stone #6E6A63, moss green #4A5240, faded blue #3E4A55, bone white #C9BFA8), dark chiaroscuro composition with 60-70% of the frame in shadow, a single warm amber light source (#D98C3F) as the only highlight, scratch-out watercolor highlights instead of white, hand-painted look, no gradients flat 2D game UI element, aged torn parchment, hand-drawn ink line borders, no perspective a square aged parchment game UI panel filling the entire frame edge to edge, a heavy hand-drawn dark ink border with rough chipped corners, warm bone-white paper surface with faint fiber texture, a thin dark wood-brown edge stain around the rim, flat front view, the whole frame covered by the panel
+hand-drawn 2D game asset, Don't Starve ink illustration style, Rusty Lake moody atmosphere, thick dark ink outlines in #1A1714 (never pure black), rough hand-drawn linework, visible dry-brush stroke edges, subtle canvas paper texture overlay, heavily desaturated cold muted palette (aged wood #5C4B3A, grey stone #6E6A63, moss green #4A5240, faded blue #3E4A55, bone white #C9BFA8), dark chiaroscuro composition with 60-70% of the frame in shadow, a single warm amber light source (#D98C3F) as the only highlight, scratch-out watercolor highlights instead of white, hand-painted look, no gradients flat 2D game UI element, aged torn parchment, hand-drawn ink line borders, no perspective a plain rectangular wooden game UI panel frame filling the entire image edge to edge, thick aged golden-brown wood border with brass corner brackets, an empty warm parchment center, hand-drawn dark ink outlines, flat front view, symmetrical four-sided border, the frame reads as one clean UI panel
 ```
 
 ## 负向

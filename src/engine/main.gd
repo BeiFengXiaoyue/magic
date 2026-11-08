@@ -68,6 +68,7 @@ func _ready() -> void:
 	if _db == null or not _db.errors.is_empty():
 		_hud.set_message("内容载入失败，见控制台。")
 		return
+	_hud.configure(_db)
 	_assemble()
 	_connect_signals()
 	_start_scene()
@@ -81,6 +82,7 @@ func _process(delta: float) -> void:
 		return
 	_time_driver.advance_real(delta)
 	_hud.set_time(_time_text())
+	_hud.set_date(_date_text())
 	if _observation.is_debug_visible():
 		_observation.set_debug(_debug_text())
 
@@ -627,6 +629,7 @@ func _refresh_all() -> void:
 	_crucible.select_tier(_pending_tier)
 	_observation.set_time(_time_text())
 	_hud.set_time(_time_text())
+	_hud.set_date(_date_text())
 	_hud.set_player(_character.hp, _character.sanity)
 	_hud.set_money(_wallet.gold)
 	_hud.set_mail(_letters.unread_ids().size() if _letters != null else 0)
@@ -655,6 +658,16 @@ func _time_text() -> String:
 	var whole_hour := int(hour)
 	var minute := int((hour - float(whole_hour)) * MINUTES_PER_HOUR)
 	return TIME_FORMAT % [whole_hour, minute, _time_driver.scale_label()]
+
+
+func _date_text() -> String:
+	if _clock == null:
+		return ""
+	var weekdays: Array[String] = [
+		"星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日",
+	]
+	var index := (_clock.today() - 1) % weekdays.size()
+	return "%d日 · %s" % [_clock.day, weekdays[index]]
 
 
 func _demand_text() -> String:

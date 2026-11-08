@@ -261,7 +261,7 @@ draft ──抽 4 张、人眼挑 1 张、回填 seed──▶ generated
 | `art_prop_tree_set` | prop | 乔木 ×2 + 灌木 ×2 | M2 | todo |
 | `art_ui_letter_paper` | ui | 信件纸页（羊皮纸、撕裂边） | M3 | todo |
 | `art_ui_journal` | ui | 手记面板（配方 / 记录两页） | M3 | todo |
-| `art_ui_panel_frame` | ui | 通用面板九宫格（HUD / 信件 / 手记） | M2 | draft |
+| `art_ui_panel_frame` | ui | 通用面板九宫格（大面板备用） | M2 | generated |
 | `art_ui_icon_clock` | ui | 时钟图标（HUD 时间） | M3 | generated |
 | `art_ui_icon_coin` | ui | 金币图标（HUD 金币） | M3 | generated |
 | `art_ui_icon_letter` | ui | 信件图标（HUD 未读） | M3 | generated |
