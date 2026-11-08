@@ -212,6 +212,7 @@ func _build_panels() -> void:
 
 func _make_overlay() -> CenterContainer:
 	var overlay := CenterContainer.new()
+	overlay.z_index = 20
 	overlay.visible = false
 	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	_ui_root.add_child(overlay)
@@ -408,6 +409,7 @@ func _on_panel_requested(panel: String, params: Dictionary) -> void:
 
 
 func _open_crucible() -> void:
+	_hud.visible = false
 	_crucible_overlay.visible = true
 	_shop_overlay.visible = false
 	_world.set_input_enabled(false)
@@ -420,6 +422,7 @@ func _open_crucible() -> void:
 
 
 func _open_shop() -> void:
+	_hud.visible = false
 	_crucible_overlay.visible = false
 	_shop_overlay.visible = true
 	_world.set_input_enabled(false)
@@ -438,11 +441,14 @@ func _close_panels() -> void:
 		_journal_overlay.visible = false
 	if _backpack_overlay != null:
 		_backpack_overlay.visible = false
+	if _hud != null:
+		_hud.visible = true
 	if _world != null:
 		_world.set_input_enabled(true)
 
 
 func _open_letters(source: String) -> void:
+	_hud.visible = false
 	if _letter_use_case == null:
 		return
 	_letter_source = source
@@ -471,6 +477,7 @@ func _on_letter_selected(letter_id: String) -> void:
 
 
 func _open_journal(page: String) -> void:
+	_hud.visible = false
 	if _letter_use_case == null:
 		return
 	_journal_overlay.visible = true
@@ -490,6 +497,7 @@ func _refresh_journal() -> void:
 	_journal_panel.refresh_records(_letter_use_case.journal_view("records"))
 
 func _open_backpack() -> void:
+	_hud.visible = false
 	if _backpack_panel == null:
 		return
 	_backpack_overlay.visible = true
@@ -504,16 +512,17 @@ func _open_backpack() -> void:
 func _refresh_backpack() -> void:
 	if _backpack_panel == null:
 		return
-	var material_lines: Array[String] = []
+	var items: Array[Dictionary] = []
 	for material_id in _inventory.materials:
 		var count := int(_inventory.materials[material_id])
 		if count <= 0:
 			continue
-		material_lines.append("%s ×%d" % [
-			str(_db.material(str(material_id)).get("name", material_id)),
-			count,
-		])
-	var product_lines: Array[String] = []
+		var material := _db.material(str(material_id))
+		items.append({
+			"art_id": str(material.get("art_id", "")),
+			"name": str(material.get("name", material_id)),
+			"count": count,
+		})
 	for index in _inventory.products.size():
 		var product := _inventory.product_at(index)
 		if product == null:
@@ -521,18 +530,15 @@ func _refresh_backpack() -> void:
 		var display := product.display_name()
 		if product.recipe_id != "":
 			display = str(_db.recipe(product.recipe_id).get("name", display))
-		var quote := _sell.quote(index)
-		var price_text := ("%d 金币" % int(quote.get("price", 0))) if bool(quote.get("can_sell", false)) else "卖不掉"
-		product_lines.append("%s · 覆盖率 %.2f · %s" % [
-			display,
-			float(quote.get("coverage", 0.0)),
-			price_text,
-		])
+		items.append({
+			"art_id": "art_ui_icon_potion",
+			"name": display,
+			"count": 1,
+		})
 	_backpack_panel.refresh({
 		"gold": _wallet.gold,
 		"demand": _demand_text(),
-		"materials": material_lines,
-		"products": product_lines,
+		"items": items,
 		"messages": _message_log.duplicate(),
 	})
 

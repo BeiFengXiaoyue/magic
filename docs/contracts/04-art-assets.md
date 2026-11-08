@@ -265,6 +265,7 @@ draft ──抽 4 张、人眼挑 1 张、回填 seed──▶ generated
 | `art_ui_icon_clock` | ui | 时钟图标（HUD 时间） | M3 | generated |
 | `art_ui_icon_coin` | ui | 金币图标（HUD 金币） | M3 | generated |
 | `art_ui_icon_letter` | ui | 信件图标（HUD 未读） | M3 | generated |
+| `art_ui_icon_potion` | ui | 药瓶图标（背包成品） | M3 | generated |
 | `art_mob_yelang` | mob | 野狼（实体怪，有影子） | M4 | todo |
 | `art_mob_dushe` | mob | 毒蛇（实体怪） | M4 | todo |
 | `art_fx_bubbles` | fx | 坩埚气泡/蒸气（循环，video 工作流） | M1 | todo |
