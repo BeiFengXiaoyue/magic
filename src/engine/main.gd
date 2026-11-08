@@ -201,8 +201,8 @@ func _build_panels() -> void:
 
 	_menu_overlay = _make_overlay()
 	var menu_frame := PanelContainer.new()
-	menu_frame.custom_minimum_size = Vector2(940.0, 660.0)
-	menu_frame.add_theme_stylebox_override("panel", UiTheme.paper_style())
+	menu_frame.custom_minimum_size = Vector2(840.0, 420.0)
+	menu_frame.add_theme_stylebox_override("panel", UiTheme.menu_style())
 	_menu_panel = MenuPanel.new()
 	_menu_panel.setup()
 	_menu_panel.close_requested.connect(_close_panels)

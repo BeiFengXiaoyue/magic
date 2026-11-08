@@ -7,10 +7,10 @@ extends VBoxContainer
 signal close_requested
 signal letter_selected(letter_id: String)
 
-const WIDTH := 920.0
-const HEIGHT := 640.0
-const COLUMNS := 10
-const SLOT_COUNT := 40
+const WIDTH := 820.0
+const HEIGHT := 400.0
+const COLUMNS := 12
+const SLOT_COUNT := 36
 const SLOT_SIZE := 52.0
 const ICON_SIZE := 34.0
 
@@ -31,16 +31,15 @@ var _letter_body: RichTextLabel
 
 func setup() -> void:
 	custom_minimum_size = Vector2(WIDTH, HEIGHT)
-	var header := HBoxContainer.new()
-	header.add_child(UiTheme.title("手记与背包"))
-	var spacer := Control.new()
-	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	header.add_child(spacer)
-	add_child(header)
-
+	var tabs_margin := MarginContainer.new()
+	tabs_margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	tabs_margin.add_theme_constant_override("margin_left", 30)
+	tabs_margin.add_theme_constant_override("margin_right", 30)
+	tabs_margin.add_theme_constant_override("margin_top", 12)
+	add_child(tabs_margin)
 	_tabs = TabContainer.new()
 	_tabs.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	add_child(_tabs)
+	tabs_margin.add_child(_tabs)
 	_build_items_page()
 	_build_info_page()
 	_build_demand_page()
@@ -217,7 +216,7 @@ func _style_tabs() -> void:
 	_tabs.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	var bar := _tabs.get_tab_bar()
 	var selected := StyleBoxFlat.new()
-	selected.bg_color = Color("#d6c8aa")
+	selected.bg_color = Color("#c9bfa8")
 	selected.border_color = Color("#8c3a34")
 	selected.set_border_width_all(2)
 	selected.content_margin_left = 10.0
@@ -225,8 +224,8 @@ func _style_tabs() -> void:
 	selected.content_margin_top = 4.0
 	selected.content_margin_bottom = 4.0
 	var unselected := StyleBoxFlat.new()
-	unselected.bg_color = Color("#b9a888")
-	unselected.border_color = Color("#6b4a2f")
+	unselected.bg_color = Color("#8a6a4a")
+	unselected.border_color = Color("#3a2a1c")
 	unselected.set_border_width_all(1)
 	unselected.content_margin_left = 10.0
 	unselected.content_margin_right = 10.0
@@ -236,7 +235,7 @@ func _style_tabs() -> void:
 	bar.add_theme_stylebox_override("tab_unselected", unselected)
 	bar.add_theme_stylebox_override("tab_hovered", selected)
 	bar.add_theme_color_override("font_selected_color", Color("#2a211a"))
-	bar.add_theme_color_override("font_unselected_color", Color("#5c4b3a"))
+	bar.add_theme_color_override("font_unselected_color", Color("#e6dcc8"))
 	bar.add_theme_font_size_override("font_size", 16)
 
 
