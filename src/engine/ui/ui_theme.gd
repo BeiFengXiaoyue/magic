@@ -17,9 +17,10 @@ const OUTLINE_SIZE := 4
 static func create() -> Theme:
 	var font := SystemFont.new()
 	font.font_names = PackedStringArray([
+		"KaiTi",
+		"STKaiti",
+		"SimSun",
 		"Microsoft YaHei",
-		"SimHei",
-		"Noto Sans CJK SC",
 		"sans-serif",
 	])
 	var theme := Theme.new()
@@ -53,6 +54,19 @@ static func label(text: String) -> Label:
 
 
 static func panel_style() -> StyleBox:
+	var texture := ArtAssets.texture("art_ui_panel_frame")
+	if texture != null:
+		var textured := StyleBoxTexture.new()
+		textured.texture = texture
+		textured.texture_margin_left = 24.0
+		textured.texture_margin_right = 24.0
+		textured.texture_margin_top = 24.0
+		textured.texture_margin_bottom = 24.0
+		textured.content_margin_left = 12.0
+		textured.content_margin_right = 12.0
+		textured.content_margin_top = 10.0
+		textured.content_margin_bottom = 10.0
+		return textured
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color("#42301f")
 	style.border_color = Color("#c08a45")
