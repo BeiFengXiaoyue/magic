@@ -48,12 +48,12 @@ var _observation: ObservationPanel
 var _shop: ShopPanel
 var _letter_panel: LetterPanel
 var _journal_panel: JournalPanel
-var _backpack_panel: BackpackPanel
+var _menu_panel: MenuPanel
 var _crucible_overlay: CenterContainer
 var _shop_overlay: CenterContainer
 var _letter_overlay: CenterContainer
 var _journal_overlay: CenterContainer
-var _backpack_overlay: CenterContainer
+var _menu_overlay: CenterContainer
 var _letter_source: String = ""
 var _message_log: Array[String] = []
 
@@ -106,7 +106,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		var enabled := _world.toggle_debug_zones()
 		_notify("布点模式：%s" % ("开" if enabled else "关"))
 	elif key_event.keycode == KEY_I:
-		_open_backpack()
+		_open_menu("items")
 	elif key_event.keycode == KEY_J:
 		_open_journal("records")
 	elif key_event.keycode == KEY_ESCAPE:
@@ -199,15 +199,16 @@ func _build_panels() -> void:
 	journal_frame.add_child(_journal_panel)
 	_journal_overlay.add_child(journal_frame)
 
-	_backpack_overlay = _make_overlay()
-	var backpack_frame := PanelContainer.new()
-	backpack_frame.custom_minimum_size = Vector2(720.0, 500.0)
-	backpack_frame.add_theme_stylebox_override("panel", UiTheme.paper_style())
-	_backpack_panel = BackpackPanel.new()
-	_backpack_panel.setup()
-	_backpack_panel.close_requested.connect(_close_panels)
-	backpack_frame.add_child(_backpack_panel)
-	_backpack_overlay.add_child(backpack_frame)
+	_menu_overlay = _make_overlay()
+	var menu_frame := PanelContainer.new()
+	menu_frame.custom_minimum_size = Vector2(940.0, 660.0)
+	menu_frame.add_theme_stylebox_override("panel", UiTheme.paper_style())
+	_menu_panel = MenuPanel.new()
+	_menu_panel.setup()
+	_menu_panel.close_requested.connect(_close_panels)
+	_menu_panel.letter_selected.connect(_on_menu_letter_selected)
+	menu_frame.add_child(_menu_panel)
+	_menu_overlay.add_child(menu_frame)
 
 
 func _make_overlay() -> CenterContainer:
@@ -439,8 +440,8 @@ func _close_panels() -> void:
 		_letter_overlay.visible = false
 	if _journal_overlay != null:
 		_journal_overlay.visible = false
-	if _backpack_overlay != null:
-		_backpack_overlay.visible = false
+	if _menu_overlay != null:
+		_menu_overlay.visible = false
 	if _hud != null:
 		_hud.visible = true
 	if _world != null:
@@ -496,21 +497,22 @@ func _refresh_journal() -> void:
 	_journal_panel.refresh_recipes(recipes_view.get("recipes", []))
 	_journal_panel.refresh_records(_letter_use_case.journal_view("records"))
 
-func _open_backpack() -> void:
+func _open_menu(page: String = "items") -> void:
 	_hud.visible = false
-	if _backpack_panel == null:
+	if _menu_panel == null:
 		return
-	_backpack_overlay.visible = true
+	_menu_overlay.visible = true
 	_crucible_overlay.visible = false
 	_shop_overlay.visible = false
 	_letter_overlay.visible = false
 	_journal_overlay.visible = false
 	_world.set_input_enabled(false)
-	_refresh_backpack()
+	_refresh_menu()
+	_menu_panel.show_page(page)
 
 
-func _refresh_backpack() -> void:
-	if _backpack_panel == null:
+func _refresh_menu() -> void:
+	if _menu_panel == null:
 		return
 	var items: Array[Dictionary] = []
 	for material_id in _inventory.materials:
@@ -535,12 +537,56 @@ func _refresh_backpack() -> void:
 			"name": display,
 			"count": 1,
 		})
-	_backpack_panel.refresh({
-		"gold": _wallet.gold,
-		"demand": _demand_text(),
+	var letters: Array[Dictionary] = []
+	if _letter_use_case != null:
+		letters = _letter_use_case.list_view("")
+	var unread := _letters.unread_ids().size() if _letters != null else 0
+	_menu_panel.refresh({
 		"items": items,
+		"letters": letters,
 		"messages": _message_log.duplicate(),
+		"demand_short": _demand_text(),
+		"demand_detail": _demand_detail_text(),
+		"info": {
+			"location": _scene_name(_world.current_scene()),
+			"date": _date_text(),
+			"time": _time_text(),
+			"hp": _character.hp,
+			"sanity": _character.sanity,
+			"gold": _wallet.gold,
+			"unread": unread,
+		},
 	})
+
+
+func _on_menu_letter_selected(letter_id: String) -> void:
+	if _letter_use_case == null or letter_id == "":
+		return
+	var result := _letter_use_case.open(letter_id)
+	if bool(result.get("ok", false)):
+		_menu_panel.show_letter(result.get("view", {}))
+		_refresh_menu()
+
+
+func _demand_detail_text() -> String:
+	var demand: Dictionary = _db.constant("demand.spring_early")
+	var needs: Dictionary = demand.get("needs", {})
+	var vocabulary: Dictionary = _db.constant("vocabulary.effects")
+	var lines: Array[String] = []
+	lines.append("[b]%s[/b]" % str(demand.get("name", "")))
+	for effect_id in needs:
+		lines.append("· %s：%.2f" % [
+			str(vocabulary.get(effect_id, effect_id)),
+			float(needs[effect_id]),
+		])
+	var days: Array = demand.get("days", [])
+	var day_parts: Array[String] = []
+	for day in days:
+		day_parts.append(str(day))
+	lines.append("有效期：第 %s 天" % "–".join(day_parts))
+	lines.append("覆盖率低于 0.50 时，小店不会收。")
+	return "
+".join(lines)
 
 
 func _notify(text: String) -> void:
@@ -549,8 +595,8 @@ func _notify(text: String) -> void:
 	_message_log.append(text)
 	while _message_log.size() > 10:
 		_message_log.pop_front()
-	if _backpack_overlay != null and _backpack_overlay.visible:
-		_refresh_backpack()
+	if _menu_overlay != null and _menu_overlay.visible:
+		_refresh_menu()
 
 
 func _on_day_passed(day: int, season: int, year: int) -> void:
@@ -657,14 +703,14 @@ func _on_state_changed(scope: String, payload: Dictionary) -> void:
 			_shelf.refresh(_inventory, _active)
 			if _shop_overlay != null and _shop_overlay.visible:
 				_refresh_shop()
-			if _backpack_overlay != null and _backpack_overlay.visible:
-				_refresh_backpack()
+			if _menu_overlay != null and _menu_overlay.visible:
+				_refresh_menu()
 		"player":
 			_hud.set_player(int(payload.get("hp", 0)), int(payload.get("sanity", 0)))
 		"money":
 			_hud.set_money(int(payload.get("gold", 0)))
-			if _backpack_overlay != null and _backpack_overlay.visible:
-				_refresh_backpack()
+			if _menu_overlay != null and _menu_overlay.visible:
+				_refresh_menu()
 		"letters":
 			_hud.set_mail(int(payload.get("unread", 0)))
 		"knowledge", "journal":
